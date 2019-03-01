@@ -11,6 +11,7 @@ type Configration struct {
 	ExpirationTime                int
 	TemporaryAccessExpirationTime int
 	HomeWorld                     int
+	Debug                         bool
 }
 
 var loaded = false
