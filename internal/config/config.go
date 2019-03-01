@@ -7,6 +7,7 @@ import (
 
 type Configration struct {
 	RESTAuthToken                 string
+	APIKeyPrefix                  string
 	ExpirationTime                int
 	TemporaryAccessExpirationTime int
 	HomeWorld                     int
