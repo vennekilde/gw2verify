@@ -1,0 +1,225 @@
+#%RAML 1.0
+title: Guild Wars 2 Verification API
+baseUri: https://farshiverpeaks.com:8321/{version}
+version: v1
+
+traits:
+    secured:
+        headers:
+            X-Access-Token:
+                type: string
+        responses:
+            403:
+                description: Access token invalid
+
+
+/configuration:
+    get:
+        is: [secured]
+        description: Get a configuration containing relevant information for running a service bot
+        responses:
+            200:
+                body:
+                    application/json:
+                        type: Configuration
+/updates:
+    /{service_id}:
+        uriParameters:
+            service_id:
+                type: integer
+                description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+        /subscribe:
+            get:
+                description: Long polling rest endpoint for receiving verification updates
+                responses:
+                    200:
+                        body:
+                            application/json:
+                                type: VerificationStatus
+                    408:
+                        description: Long polling timeout, no events available during request period
+/users:
+    /{service_id}:
+        uriParameters:
+            service_id:
+                type: integer
+                description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+        /{service_user_id}:
+            uriParameters:
+                service_user_id:
+                    type: string
+            /properties:
+                get:
+                    is: [secured]
+                    description: Get all user properties
+                    responses:
+                        200:
+                            body:
+                                application/json:
+                                    type: Property[]
+                put:
+                    is: [secured]
+                    description: Set a user property
+                    queryParameters:
+                        name:
+                            type: string
+                            description: Property name
+                        value:
+                            type: string
+                            description: Property value
+                    responses:
+                        200:
+                /{property}:
+                    get:
+                        is: [secured]
+                        description: Get a user property
+                        queryParameters:
+                            name:
+                                type: string
+                                description: Property name
+                        responses:
+                            200:
+                                body:
+                                    application/json:
+                                        type: Property
+                            404:
+                                description: User does not have the requested property
+            /apikey:
+                put:
+                    is: [secured]
+                    description: Set a service user's API key
+                    queryParameters:
+                        skip-requirements:
+                            type: boolean
+                            description: Skip the variuse apikey requirements that might be in place
+                    body:
+                        application/json:
+                            type: APIKeyData
+                    responses:
+                        200:
+            /verification:
+                /refresh:
+                    post:
+                        is: [secured]
+                        description: Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
+                        responses:
+                            200:
+                                body:
+                                    application/json:
+                                        type: VerificationStatus
+                /status:
+                    get:
+                        is: [secured]
+                        description: Get a users verification status
+                        queryParameters:
+                            display_name:
+                                required: false
+                                type: string
+                                description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+                        responses:
+                            400:
+                                description: ServiceID needs to be an integer
+                            200:
+                                body:
+                                    application/json:
+                                        type: VerificationStatus
+                /temporary:
+                    put:
+                        is: [secured]
+                        description: Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
+                        body:
+                            application/json:
+                                type: TemporaryData
+                        responses:
+                            200:
+                                body:
+                                    application/json:
+                                        type: integer
+                                        description: expires after given amount of seconds
+
+
+types:
+    Property:
+        type: object
+        properties:
+            name:
+                type: string
+            value:
+                type: string
+    AccessType:
+        type: string
+        enum: [HOME_WORLD, LINKED_WORLD]
+    Configuration:
+        type: object
+        properties:
+            expiration_time:
+                type: integer
+            temporary_access_expiration_time:
+                type: integer
+            home_world:
+                type: integer
+                description: World id used a home world
+            link_worlds:
+                type: integer[]
+                description: List of worlds linked with the home world
+    VerificationStatus:
+        type: object
+        properties:
+            status:
+                type: string
+                enum: [ACCESS_DENIED_UNKNOWN, ACCESS_GRANTED_HOME_WORLD, ACCESS_GRANTED_LINKED_WORLD, ACCESS_GRANTED_HOME_WORLD_TEMPORARY, ACCESS_GRANTED_LINKED_WORLD_TEMPORARY, ACCESS_DENIED_ACCOUNT_NOT_LINKED, ACCESS_DENIED_EXPIRED, ACCESS_DENIED_INVALID_WORLD, ACCESS_DENIED_BANNED]
+            expires:
+                required: false
+                type: integer
+            account_id:
+                required: false
+                type: string
+            ban_reason:
+                required: false
+                type: string
+            is_primary:
+                required: false
+                default: true
+                type: boolean
+            primary_user_id:
+                required: false
+                type: string
+            service_links:
+                required: false
+                type: ServiceLink[]
+            attributes:
+                required: false
+                type: string[]
+    ServiceLink:
+        type: object
+        properties:
+            service_user_id:
+                type: string
+            service_id:
+                type: integer
+                description: ID of the service the user id belongs to
+            display_name:
+                required: false
+                type: string
+    TemporaryData:
+        type: object
+        properties:
+            world:
+                type: integer
+                required: false
+            access_type:
+                type: AccessType
+                required: false
+            display_name:
+                required: false
+                type: string
+                description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+    APIKeyData:
+        type: object
+        properties:
+            apikey:
+                type: string
+                description: The api to set for the user
+            primary:
+                type: boolean
+                description: Set if the user should be the primary user of that particular service. There can only be one per service per account. Setting a new primary user will override the old one
