@@ -8,4 +8,5 @@ RUN go install -v ./...
 RUN apk del .build-dependencies  
 RUN adduser -S -D -H -h . gw2verify
 USER gw2verify
+EXPOSE 5000/tcp
 CMD ["gw2verify"] 
