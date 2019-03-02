@@ -20,5 +20,6 @@ func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, user
 	}
 	glog.Warningf("Request {URI: %s, RemoteAddr: %s} caused error msg: %s", r.RequestURI, r.RemoteAddr, errorMsg)
 	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&jsonErr)
 }
