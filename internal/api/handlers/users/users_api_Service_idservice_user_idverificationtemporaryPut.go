@@ -39,15 +39,15 @@ func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.Res
 			if len(verify.Config.LinkedWorlds) > 0 {
 				world = verify.Config.LinkedWorlds[0]
 			} else {
-				ThrowReqError(w, r, "Currently not linked with any other servers", http.StatusBadRequest)
+				ThrowReqError(w, r, "Currently not linked with any other servers", nil, http.StatusBadRequest)
 				return
 			}
 		} else {
-			ThrowReqError(w, r, "Invalid AccessType", http.StatusBadRequest)
+			ThrowReqError(w, r, "Invalid AccessType", nil, http.StatusBadRequest)
 			return
 		}
 	} else {
-		ThrowReqError(w, r, "Missing world or access_type", http.StatusBadRequest)
+		ThrowReqError(w, r, "Missing world or access_type", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -58,14 +58,14 @@ func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.Res
 	serviceID := params["service_id"]
 	serviceIDInt, err := strconv.Atoi(serviceID)
 	if err != nil {
-		ThrowReqError(w, r, "service id is not an integer", http.StatusBadRequest)
+		ThrowReqError(w, r, "service id is not an integer", nil, http.StatusBadRequest)
 		return
 	}
 	serviceUserID := params["service_user_id"]
 
-	err = verify.GrantTemporaryWorldAssignment(serviceIDInt, serviceUserID, world)
+	err, userErr := verify.GrantTemporaryWorldAssignment(serviceIDInt, serviceUserID, world)
 	if err != nil {
-		ThrowReqError(w, r, err.Error(), http.StatusInternalServerError)
+		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
 

@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
-	"github.com/vennekilde/gw2verify/pkg/verify"
 	"github.com/vennekilde/gw2verify/internal/api/types"
+	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
 // Service_idservice_user_idverificationrefreshPost is the handler for POST /users/{service_id}/{service_user_id}/verification/refresh
@@ -27,9 +27,9 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 	}
 
 	gw2a := gw2api.NewGW2Api()
-	err = verify.SynchronizeLinkedUser(gw2a, serviceIDInt, serviceUserID)
+	err, userErr := verify.SynchronizeLinkedUser(gw2a, serviceIDInt, serviceUserID)
 	if err != nil {
-		ThrowReqError(w, r, err.Error(), http.StatusInternalServerError)
+		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
 	status := verify.Status(serviceIDInt, serviceUserID)

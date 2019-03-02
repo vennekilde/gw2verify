@@ -32,13 +32,13 @@ func (api UsersAPI) Service_idservice_user_idapikeyPut(w http.ResponseWriter, r 
 	serviceID := params["service_id"]
 	serviceIDInt, err := strconv.Atoi(serviceID)
 	if err != nil {
-		ThrowReqError(w, r, "service id is not an integer", http.StatusBadRequest)
+		ThrowReqError(w, r, "service id is not an integer", nil, http.StatusBadRequest)
 		return
 	}
 	serviceUserID := params["service_user_id"]
 
 	if reqBody.Apikey == "" {
-		ThrowReqError(w, r, "apikey is missing", http.StatusBadRequest)
+		ThrowReqError(w, r, "apikey is missing", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -53,9 +53,9 @@ func (api UsersAPI) Service_idservice_user_idapikeyPut(w http.ResponseWriter, r 
 	}
 
 	gw2a := gw2api.NewGW2Api()
-	err = verify.SetAPIKeyByUserService(gw2a, serviceIDInt, serviceUserID, reqBody.Primary, reqBody.Apikey, skipRequirements)
+	err, userErr := verify.SetAPIKeyByUserService(gw2a, serviceIDInt, serviceUserID, reqBody.Primary, reqBody.Apikey, skipRequirements)
 	if err != nil {
-		ThrowReqError(w, r, err.Error(), http.StatusInternalServerError)
+		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
 }

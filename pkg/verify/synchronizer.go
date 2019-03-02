@@ -87,25 +87,27 @@ func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []strin
 	return acc, err
 }
 
-func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUserID string) (err error) {
+func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUserID string) (err error, userErr error) {
 	link := ServiceLink{}
 	err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error
 	if err != nil {
-		return err
+		return err, nil
 	}
 	if link.AccountID == "" {
-		return errors.New("No service link found with that user id and service id")
+		err = errors.New("No service link found with that user id and service id")
+		return err, err
 	}
 
 	tokeninfo := gw2api.TokenInfo{}
 	err = orm.DB().First(&tokeninfo, "account_id = ?", link.AccountID).Error
 	if err != nil {
-		return err
+		return err, nil
 	}
 	if tokeninfo.AccountID != link.AccountID {
-		return errors.New("No apikey associated with found service link")
+		err = errors.New("No apikey associated with found service link")
+		return err, err
 	}
 
 	_, err = SynchronizeAPIKey(gw2apiclient, tokeninfo.APIKey, tokeninfo.Permissions)
-	return err
+	return nil, err
 }

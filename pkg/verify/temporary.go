@@ -14,12 +14,12 @@ type TemporaryAccess struct {
 	World         int
 }
 
-func GrantTemporaryWorldAssignment(serviceID int, serviceUserID string, world int) error {
+func GrantTemporaryWorldAssignment(serviceID int, serviceUserID string, world int) (err error, userErr error) {
 	temporaryAccess := TemporaryAccess{
 		ServiceUserID: serviceUserID,
 		ServiceID:     serviceID,
 		World:         world,
 	}
 	temporaryAccess.DbUpdated = time.Now().UTC()
-	return orm.DB().Assign(temporaryAccess).FirstOrCreate(&temporaryAccess).Error
+	return orm.DB().Assign(temporaryAccess).FirstOrCreate(&temporaryAccess).Error, nil
 }

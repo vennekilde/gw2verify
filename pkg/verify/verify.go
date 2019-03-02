@@ -14,24 +14,24 @@ import (
 	"github.com/vennekilde/gw2verify/internal/api/types"
 )
 
-func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error) {
+func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
 	if err = gw2api.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
-		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err)
+		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
 	token, err := gw2api.TokenInfo()
 	if err != nil {
-		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err)
+		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 	acc, err := gw2api.Account()
 	if err != nil {
-		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err)
+		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
 	if ignoreRestrictions == false {
 		err = processRestrictions(gw2api, acc, token, serviceID, serviceUserID)
 		if err != nil {
-			return err
+			return err, err
 		}
 	}
 
@@ -39,14 +39,14 @@ func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID 
 
 	err = token.Persist(gw2api.Auth, acc.ID)
 	if err != nil {
-		return fmt.Errorf("Could not persist tokeninfo information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err)
+		return fmt.Errorf("Could not persist tokeninfo information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
 	err = acc.Persist()
 	if err != nil {
-		return fmt.Errorf("Could not persist account information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err)
+		return fmt.Errorf("Could not persist account information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
 
-	return SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
+	return nil, SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
 }
 
 func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {

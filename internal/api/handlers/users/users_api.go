@@ -12,9 +12,12 @@ import (
 type UsersAPI struct {
 }
 
-func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, statusCode int) {
+func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, userErr error, statusCode int) {
 	jsonErr := make(map[string]string)
 	jsonErr["error"] = errorMsg
+	if userErr != nil {
+		jsonErr["safe-display-error"] = userErr.Error()
+	}
 	glog.Warningf("Request {URI: %s, RemoteAddr: %s} caused error msg: %s", r.RequestURI, r.RemoteAddr, errorMsg)
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(&jsonErr)
