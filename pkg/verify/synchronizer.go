@@ -14,8 +14,9 @@ import (
 
 // StartAPISynchronizer starts a synchronization loop that will continuesly fetch the oldest updated API key
 // and synchronize it with the gw2 api
-func StartAPISynchronizer(gw2api *gw2api.GW2Api) {
+func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 	var attemptsSinceLastSuccess int
+	var acc gw2api.Account
 	for {
 		if attemptsSinceLastSuccess >= 10 {
 			time.Sleep(10 * time.Second)
@@ -32,38 +33,58 @@ func StartAPISynchronizer(gw2api *gw2api.GW2Api) {
 			continue
 		}
 
-		accName, err := SynchronizeAPIKey(gw2api, tokeninfo.APIKey, tokeninfo.Permissions)
+		acc, err = SynchronizeAPIKey(gw2API, tokeninfo.APIKey, tokeninfo.Permissions)
 		if err != nil {
-			if accName != "" {
-				glog.Errorf("Could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, accName, err)
-			} else {
-				glog.Errorf("Could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
-			}
-			tokeninfo.UpdateLastAttemptedUpdate()
-			attemptsSinceLastSuccess++
+			goto SyncError
 		} else {
-			glog.Infof("Updated account: %s", accName)
+			glog.Infof("Updated account: %s", acc.Name)
 			tokeninfo.UpdateLastSuccessfulUpdate()
 			attemptsSinceLastSuccess = 0
 		}
+
+		//Check if token metadata is missing
+		if tokeninfo.AccountID == "" || len(tokeninfo.Permissions) <= 0 {
+			//Retrieve tokeninfo from api and persist it
+			nTokenInfo, err := gw2API.TokenInfo()
+			if err != nil {
+				goto SyncError
+			}
+
+			if err = nTokenInfo.Persist(tokeninfo.APIKey, acc.ID); err != nil {
+				goto SyncError
+			}
+		}
+
+		//Skip error handling
+		continue
+
+	SyncError:
+		if acc.Name != "" {
+			glog.Errorf("Could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, acc.Name, err)
+		} else {
+			glog.Errorf("Could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
+		}
+		tokeninfo.UpdateLastAttemptedUpdate()
+		attemptsSinceLastSuccess++
+		continue
 	}
 }
 
-func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []string) (accountName string, err error) {
+func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []string) (acc gw2api.Account, err error) {
 	err = gw2API.SetAuthenticationWithoutCheck(apikey, permissions)
 	if err != nil {
-		return "", err
+		return acc, err
 	}
-	acc, err := gw2API.Account()
+	acc, err = gw2API.Account()
 	if err != nil {
-		return "", err
+		return acc, err
 	}
 
 	CheckForVerificationUpdate(acc)
 
 	acc.Persist()
 
-	return acc.Name, err
+	return acc, err
 }
 
 func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUserID string) (err error) {
