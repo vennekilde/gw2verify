@@ -17,11 +17,6 @@ func StartServer() {
 
 	r := mux.NewRouter()
 
-	// home page
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
-	})
-
 	initRoutes(r)
 
 	log.Println("starting server")
