@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	flag.Set("stderrthreshold", "INFO")
 	flag.Parse()
 	defer glog.Flush()
 
