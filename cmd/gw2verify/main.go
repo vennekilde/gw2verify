@@ -24,7 +24,7 @@ func main() {
 	//orm.DB().AutoMigrate(gw2api.Account{}, gw2api.TokenInfo{})
 	//orm.DB().AutoMigrate(verify.ServiceLink{}, verify.TemporaryAccess{})
 
-	api.StartServer()
+	go api.StartServer()
 
 	gw2api := gw2api.NewGW2Api()
 	verify.StartAPISynchronizer(gw2api)
