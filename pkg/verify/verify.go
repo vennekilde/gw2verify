@@ -12,6 +12,7 @@ import (
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/api/handlers/updates"
 	"github.com/vennekilde/gw2verify/internal/api/types"
+	"github.com/vennekilde/gw2verify/internal/config"
 )
 
 func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
@@ -50,6 +51,10 @@ func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID 
 }
 
 func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
+
+	if config.Config().SkipRestrictions {
+		return nil
+	}
 
 	//Check if api key is named correctly
 	apiKeyCode := GetAPIKeyCode(serviceID, serviceUserID)

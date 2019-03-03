@@ -11,6 +11,7 @@ type Configration struct {
 	ExpirationTime                int
 	TemporaryAccessExpirationTime int
 	HomeWorld                     int
+	SkipRestrictions              bool
 	Debug                         bool
 }
 
