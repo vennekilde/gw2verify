@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/golang/glog"
 
@@ -16,6 +17,9 @@ import (
 )
 
 func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
+	//Stip spaces
+	apikey = SpaceStringsBuilder(apikey)
+
 	if err = gw2api.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
@@ -50,6 +54,17 @@ func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID 
 	}
 
 	return nil, SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
+}
+
+func SpaceStringsBuilder(str string) string {
+	var b strings.Builder
+	b.Grow(len(str))
+	for _, ch := range str {
+		if !unicode.IsSpace(ch) {
+			b.WriteRune(ch)
+		}
+	}
+	return b.String()
 }
 
 func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
@@ -161,7 +176,7 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 	if err := orm.DB().Omit("db_created").Save(&link).Error; err != nil {
 		return fmt.Errorf("Could not persist service link: User %s on service %d. Error: %#v", serviceUserID, serviceID, err)
 	}
-	glog.Infof("Stored service link %#v", link)
+	glog.Infof("Stored service link ", link)
 	return err
 }
 
