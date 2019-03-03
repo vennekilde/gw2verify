@@ -37,7 +37,9 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 		if err != nil {
 			goto SyncError
 		} else {
-			glog.Infof("Updated account: %s", acc.Name)
+			if config.Config().Debug {
+				glog.Infof("Updated account: %s", acc.Name)
+			}
 			tokeninfo.UpdateLastSuccessfulUpdate()
 			attemptsSinceLastSuccess = 0
 		}
