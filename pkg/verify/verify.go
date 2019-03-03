@@ -42,6 +42,8 @@ func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID 
 	if err != nil {
 		return fmt.Errorf("Could not persist tokeninfo information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
+	glog.Infof("Stored APIKey '%s' with account id: %s", apikey, acc.ID)
+
 	err = acc.Persist()
 	if err != nil {
 		return fmt.Errorf("Could not persist account information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
@@ -159,6 +161,7 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 	if err := orm.DB().Omit("db_created").Save(&link).Error; err != nil {
 		return fmt.Errorf("Could not persist service link: User %s on service %d. Error: %#v", serviceUserID, serviceID, err)
 	}
+	glog.Infof("Stored service link %#v", link)
 	return err
 }
 
