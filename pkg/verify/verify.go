@@ -176,7 +176,7 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 	if err := orm.DB().Omit("db_created").Save(&link).Error; err != nil {
 		return fmt.Errorf("Could not persist service link: User %s on service %d. Error: %#v", serviceUserID, serviceID, err)
 	}
-	glog.Infof("Stored service link ", link)
+	glog.Infof("Stored service link {ServiceID: %d, ServiceUserID: %s, AccountID: %s}", link.ServiceID, link.ServiceUserID, link.ServiceUserID)
 	return err
 }
 
