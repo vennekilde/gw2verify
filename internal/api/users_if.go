@@ -2,14 +2,17 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // UsersInterface is interface for /users root endpoint
 type UsersInterface interface { // Service_idservice_user_idapikeyPut is the handler for PUT /users/{service_id}/{service_user_id}/apikey
 	// Set a service user's API key
 	Service_idservice_user_idapikeyPut(http.ResponseWriter, *http.Request)
+	// Get a service user's API key name
+	Service_idservice_user_idapikeynameGet(http.ResponseWriter, *http.Request)
 	// Service_idservice_user_idpropertiespropertyGet is the handler for GET /users/{service_id}/{service_user_id}/properties/{property}
 	// Get a user property
 	Service_idservice_user_idpropertiespropertyGet(http.ResponseWriter, *http.Request)
@@ -33,6 +36,7 @@ type UsersInterface interface { // Service_idservice_user_idapikeyPut is the han
 // UsersInterfaceRoutes is routing for /users root endpoint
 func UsersInterfaceRoutes(r *mux.Router, i UsersInterface) {
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/apikey", i.Service_idservice_user_idapikeyPut).Methods("PUT")
+	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/apikey/name", i.Service_idservice_user_idapikeynameGet).Methods("GET")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties/{property}", i.Service_idservice_user_idpropertiespropertyGet).Methods("GET")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties", i.Service_idservice_user_idpropertiesGet).Methods("GET")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties", i.Service_idservice_user_idpropertiesPut).Methods("PUT")

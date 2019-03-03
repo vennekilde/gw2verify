@@ -57,6 +57,10 @@ traits:
                             body:
                                 application/json:
                                     type: Property[]
+                        400:
+                            body:
+                                application/json:
+                                    type: Error
                 put:
                     is: [secured]
                     description: Set a user property
@@ -69,6 +73,10 @@ traits:
                             description: Property value
                     responses:
                         200:
+                        400:
+                            body:
+                                application/json:
+                                    type: Error
                 /{property}:
                     get:
                         is: [secured]
@@ -97,6 +105,27 @@ traits:
                             type: APIKeyData
                     responses:
                         200:
+                        400:
+                            body:
+                                application/json:
+                                    type: Error
+                        500:
+                            body:
+                                application/json:
+                                    type: Error
+                /name:
+                    get:
+                        is: [secured]
+                        description: Get a service user's apikey name they are required to use if apikey name restriction is enforced
+                        responses:
+                            200:
+                                body:
+                                    application/json:
+                                        type: APIKeyName
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
             /verification:
                 /refresh:
                     post:
@@ -107,6 +136,14 @@ traits:
                                 body:
                                     application/json:
                                         type: VerificationStatus
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
+                            500:
+                                body:
+                                    application/json:
+                                        type: Error
                 /status:
                     get:
                         is: [secured]
@@ -117,12 +154,14 @@ traits:
                                 type: string
                                 description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
                         responses:
-                            400:
-                                description: ServiceID needs to be an integer
                             200:
                                 body:
                                     application/json:
                                         type: VerificationStatus
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
                 /temporary:
                     put:
                         is: [secured]
@@ -136,9 +175,24 @@ traits:
                                     application/json:
                                         type: integer
                                         description: expires after given amount of seconds
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
+                            500:
+                                body:
+                                    application/json:
+                                        type: Error
 
 
 types:
+    Error:
+        type: object
+        properties:
+            error:
+                type: string
+            safe-display-error:
+                type: string
     Property:
         type: object
         properties:
@@ -223,3 +277,9 @@ types:
             primary:
                 type: boolean
                 description: Set if the user should be the primary user of that particular service. There can only be one per service per account. Setting a new primary user will override the old one
+    APIKeyName:
+        type: object
+        properties:
+            name:
+                type: string
+                description: The apikey name the user has to name their apikey if apikey name is enforced

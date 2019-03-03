@@ -23,3 +23,9 @@ func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, user
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(&jsonErr)
 }
+
+func RespWithSuccess(w http.ResponseWriter, r *http.Request, respBody interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(&respBody)
+}
