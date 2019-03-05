@@ -2,6 +2,7 @@ package verify
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/vennekilde/gw2apidb/pkg/orm"
@@ -66,7 +67,11 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 		if acc.Name != "" {
 			glog.Errorf("Could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, acc.Name, err)
 		} else {
-			glog.Errorf("Could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
+			// Show error if in debug mode, or if error is not just an error, stating it is an invalid key
+			showErr := !strings.Contains(err.Error(), "invalid key") || config.Config().Debug
+			if showErr {
+				glog.Errorf("Could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
+			}
 		}
 		tokeninfo.UpdateLastAttemptedUpdate()
 		attemptsSinceLastSuccess++
