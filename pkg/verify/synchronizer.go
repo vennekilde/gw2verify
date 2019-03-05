@@ -18,6 +18,8 @@ import (
 func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 	var attemptsSinceLastSuccess int
 	var acc gw2api.Account
+	var successCount = 0
+	var successTimestamp = time.Now()
 	for {
 		if attemptsSinceLastSuccess >= 10 {
 			time.Sleep(10 * time.Second)
@@ -42,6 +44,12 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 		} else {
 			if config.Config().Debug {
 				glog.Infof("Updated account: %s", acc.Name)
+			}
+			successCount++
+			if time.Now().Sub(successTimestamp) >= 60*10 {
+				glog.Infof("%d successful refreshes last 10 minutes", successCount)
+				successTimestamp = time.Now()
+				successCount = 0
 			}
 			tokeninfo.UpdateLastSuccessfulUpdate()
 			attemptsSinceLastSuccess = 0
