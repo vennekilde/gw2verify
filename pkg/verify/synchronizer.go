@@ -46,7 +46,7 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 				glog.Infof("Updated account: %s", acc.Name)
 			}
 			successCount++
-			if time.Now().Sub(successTimestamp) >= 60*10 {
+			if time.Since(successTimestamp).Minutes() >= 10 {
 				glog.Infof("%d successful refreshes last 10 minutes", successCount)
 				successTimestamp = time.Now()
 				successCount = 0
