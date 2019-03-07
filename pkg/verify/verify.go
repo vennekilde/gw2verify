@@ -84,7 +84,7 @@ func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api
 		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", GetAPIKeyName(serviceID, serviceUserID), token.Name)
 	}
 
-	freeToPlay := Contains(acc.Access, PlayForFree)
+	freeToPlay := Contains(acc.Access, PlayForFree) && !Contains(acc.Access, GuildWars2)
 
 	//FreeToPlay restrictions
 	if freeToPlay {
