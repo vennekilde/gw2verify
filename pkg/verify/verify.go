@@ -16,25 +16,30 @@ import (
 	"github.com/vennekilde/gw2verify/internal/config"
 )
 
-func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
+func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
 	//Stip spaces
 	apikey = SpaceStringsBuilder(apikey)
 
-	if err = gw2api.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
+	if err = gw2API.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
-	token, err := gw2api.TokenInfo()
+	token, err := gw2API.TokenInfo()
 	if err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
-	acc, err := gw2api.Account()
+	acc, err := gw2API.Account()
 	if err != nil {
+		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
+	}
+
+	//Set additional token permissions
+	if err = gw2API.SetAuthenticationWithoutCheck(apikey, token.Permissions); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
 	if ignoreRestrictions == false {
-		err = processRestrictions(gw2api, acc, token, serviceID, serviceUserID)
+		err = processRestrictions(gw2API, acc, token, serviceID, serviceUserID)
 		if err != nil {
 			return err, err
 		}
@@ -42,7 +47,7 @@ func SetAPIKeyByUserService(gw2api *gw2api.GW2Api, serviceID int, serviceUserID 
 
 	CheckForVerificationUpdate(acc)
 
-	err = token.Persist(gw2api.Auth, acc.ID)
+	err = token.Persist(gw2API.Auth, acc.ID)
 	if err != nil {
 		return fmt.Errorf("Could not persist tokeninfo information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
