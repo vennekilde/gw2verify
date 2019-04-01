@@ -34,11 +34,15 @@ func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.Res
 	} else if len(reqBody.Access_type) > 0 {
 		reqBody.Access_type = types.AccessType(strings.ToUpper(string(reqBody.Access_type)))
 		if reqBody.Access_type == types.AccessTypeHOME_WORLD {
+			// Grant Home World temporary access
 			world = config.Config().HomeWorld
-		} else if reqBody.Access_type == types.AccessTypeHOME_WORLD {
+		} else if reqBody.Access_type == types.AccessTypeLINKED_WORLD {
+			// Grant Linked World temporary access
 			if len(verify.Config.LinkedWorlds) > 0 {
 				world = verify.Config.LinkedWorlds[0]
 			} else {
+				// Not linked with another world, so cannot temporary grant linked world access
+				// @TODO Consider just setting the user to home world temporary in this case
 				ThrowReqError(w, r, "Currently not linked with any other servers", nil, http.StatusBadRequest)
 				return
 			}
