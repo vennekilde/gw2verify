@@ -109,7 +109,9 @@ func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api
 		//Calc highest char level
 		highestLevel := 0
 		for _, char := range chars {
-			highestLevel = char.Level
+			if char.Level > highestLevel {
+				highestLevel = char.Level
+			}
 		}
 
 		//FreeToPlay level 80 retrictions
