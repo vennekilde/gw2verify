@@ -8,11 +8,12 @@ import (
 )
 
 // UsersInterface is interface for /users root endpoint
-type UsersInterface interface { // Service_idservice_user_idapikeyPut is the handler for PUT /users/{service_id}/{service_user_id}/apikey
+type UsersInterface interface { // Service_idservice_user_idapikeynameGet is the handler for GET /users/{service_id}/{service_user_id}/apikey/name
+	// Get a service user's apikey name they are required to use if apikey name restriction is enforced
+	Service_idservice_user_idapikeynameGet(http.ResponseWriter, *http.Request)
+	// Service_idservice_user_idapikeyPut is the handler for PUT /users/{service_id}/{service_user_id}/apikey
 	// Set a service user's API key
 	Service_idservice_user_idapikeyPut(http.ResponseWriter, *http.Request)
-	// Get a service user's API key name
-	Service_idservice_user_idapikeynameGet(http.ResponseWriter, *http.Request)
 	// Service_idservice_user_idpropertiespropertyGet is the handler for GET /users/{service_id}/{service_user_id}/properties/{property}
 	// Get a user property
 	Service_idservice_user_idpropertiespropertyGet(http.ResponseWriter, *http.Request)
@@ -29,7 +30,7 @@ type UsersInterface interface { // Service_idservice_user_idapikeyPut is the han
 	// Get a users verification status
 	Service_idservice_user_idverificationstatusGet(http.ResponseWriter, *http.Request)
 	// Service_idservice_user_idverificationtemporaryPut is the handler for PUT /users/{service_id}/{service_user_id}/verification/temporary
-	// Grant a user temporary world relation
+	// Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
 	Service_idservice_user_idverificationtemporaryPut(http.ResponseWriter, *http.Request)
 }
 

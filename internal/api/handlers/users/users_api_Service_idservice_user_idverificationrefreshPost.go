@@ -32,10 +32,10 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
-	status := verify.Status(serviceIDInt, serviceUserID)
+	status, _ := verify.Status(serviceIDInt, serviceUserID)
 	var respBody types.VerificationStatus
 	respBody.Status = types.EnumVerificationStatusStatus(status.Status.Name())
-	respBody.Account_id = status.AccountID
+	respBody.Account_id = status.AccountData.ID
 	respBody.Expires = status.Expires
 
 	json.NewEncoder(w).Encode(&respBody)

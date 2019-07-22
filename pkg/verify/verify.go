@@ -144,9 +144,9 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 		channel := updates.ServicePollListeners[link.ServiceID]
 		if channel != nil {
 			acc.DbUpdated = time.Now().UTC()
-			status := StatusWithAccount(link.ServiceID, link.ServiceUserID, &acc)
+			status, _ := StatusWithAccount(link.ServiceID, link.ServiceUserID, &acc)
 			verificationStatus := types.VerificationStatus{
-				Account_id: status.AccountID,
+				Account_id: status.AccountData.ID,
 				Expires:    status.Expires,
 				Status:     types.EnumVerificationStatusStatus(status.Status.Name()),
 				Service_links: []types.ServiceLink{

@@ -7,6 +7,7 @@ import (
 
 type VerificationStatus struct {
 	Account_id      string                       `json:"account_id,omitempty"`
+	Account_name    string                       `json:"account_name,omitempty"`
 	Attributes      []string                     `json:"attributes,omitempty"`
 	Ban_reason      string                       `json:"ban_reason,omitempty"`
 	Expires         int                          `json:"expires,omitempty"`
@@ -14,6 +15,7 @@ type VerificationStatus struct {
 	Primary_user_id string                       `json:"primary_user_id,omitempty"`
 	Service_links   []ServiceLink                `json:"service_links,omitempty"`
 	Status          EnumVerificationStatusStatus `json:"status" validate:"nonzero"`
+	World           int                          `json:"world" validate:"nonzero"`
 }
 
 func (s VerificationStatus) Validate() error {

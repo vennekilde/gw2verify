@@ -10,9 +10,10 @@ import (
 )
 
 type VerificationStatusExt struct {
-	Status    VerificationStatus
-	Expires   int
-	AccountID string
+	Status      VerificationStatus
+	Expires     int
+	AccountData gw2api.Account
+	ServiceLink ServiceLink
 }
 
 type VerificationStatus int
@@ -87,17 +88,16 @@ var Config = Configuration{
 	LinkedWorlds: []int{2006},
 }
 
-func Status(serviceID int, serviceUserID string) (status VerificationStatusExt) {
+func Status(serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink) {
 	return StatusWithAccount(serviceID, serviceUserID, nil)
 }
-func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt) {
+func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink) {
 	if serviceUserID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
-		return status
+		return status, link
 	}
 
 	//Check if user is linked to a gw2 account
-	link := ServiceLink{}
 	err := orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error
 	if link.AccountID != "" {
 		//Check verification status of linked account
@@ -111,7 +111,7 @@ func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Acco
 			status = AccountStatus(acc)
 			//Return status if access has been granted, or if the user is banned
 			if status.Status.AccessGranted() || status.Status == ACCESS_DENIED_BANNED {
-				return status
+				return status, link
 			}
 		}
 	}
@@ -123,23 +123,23 @@ func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Acco
 		status.Expires = config.Config().TemporaryAccessExpirationTime - timeSinceGranted
 		if timeSinceGranted >= config.Config().TemporaryAccessExpirationTime {
 			status.Status = ACCESS_DENIED_EXPIRED
-			return status
+			return status, link
 		}
 		if tempAccess.World == config.Config().HomeWorld {
 			status.Status = ACCESS_GRANTED_HOME_WORLD_TEMPORARY
-			return status
+			return status, link
 		}
 		for _, world := range Config.LinkedWorlds {
 			if world == tempAccess.World {
 				status.Status = ACCESS_GRANTED_LINKED_WORLD_TEMPORARY
-				return status
+				return status, link
 			}
 		}
 		status.Status = ACCESS_DENIED_INVALID_WORLD
-		return status
+		return status, link
 	}
 	status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
-	return status
+	return status, link
 }
 
 func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
@@ -147,7 +147,7 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status
 	}
-	status.AccountID = acc.ID
+	status.AccountData.ID = acc.ID
 	//Ban logic
 	if false {
 		status.Status = ACCESS_DENIED_BANNED

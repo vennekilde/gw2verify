@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/vennekilde/gw2verify/pkg/verify"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
+	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
 // Service_idservice_user_idverificationstatusGet is the handler for GET /users/{service_id}/{service_user_id}/verification/status
@@ -29,11 +29,19 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	status := verify.Status(serviceIDInt, serviceUserID)
-	var respBody types.VerificationStatus
-	respBody.Status = types.EnumVerificationStatusStatus(status.Status.Name())
-	respBody.Account_id = status.AccountID
-	respBody.Expires = status.Expires
-
+	status, link := verify.Status(serviceIDInt, serviceUserID)
+	linkREST := types.ServiceLink{
+		Display_name:    link.ServiceUserDisplayName,
+		Service_id:      link.ServiceID,
+		Service_user_id: link.ServiceUserID,
+	}
+	respBody := types.VerificationStatus{
+		Status:        types.EnumVerificationStatusStatus(status.Status.Name()),
+		Account_id:    status.AccountData.ID,
+		Account_name:  status.AccountData.Name,
+		Expires:       status.Expires,
+		World:         status.AccountData.World,
+		Service_links: []types.ServiceLink{linkREST},
+	}
 	json.NewEncoder(w).Encode(&respBody)
 }
