@@ -7,10 +7,16 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
+
+type VerificationStatusExtended struct {
+	types.VerificationStatus
+	AccountData gw2api.Account
+}
 
 // Service_idservice_user_idverificationstatusGet is the handler for GET /users/{service_id}/{service_user_id}/verification/status
 // Get a users verification status
@@ -35,13 +41,14 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 		Service_id:      link.ServiceID,
 		Service_user_id: link.ServiceUserID,
 	}
-	respBody := types.VerificationStatus{
-		Status:        types.EnumVerificationStatusStatus(status.Status.Name()),
-		Account_id:    status.AccountData.ID,
-		Account_name:  status.AccountData.Name,
-		Expires:       status.Expires,
-		World:         status.AccountData.World,
-		Service_links: []types.ServiceLink{linkREST},
+	respBody := VerificationStatusExtended{
+		VerificationStatus: types.VerificationStatus{
+			Status:        types.EnumVerificationStatusStatus(status.Status.Name()),
+			Account_id:    status.AccountData.ID,
+			Expires:       status.Expires,
+			Service_links: []types.ServiceLink{linkREST},
+		},
+		AccountData: status.AccountData,
 	}
 	json.NewEncoder(w).Encode(&respBody)
 }
