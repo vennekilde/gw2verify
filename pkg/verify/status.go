@@ -147,7 +147,7 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status
 	}
-	status.AccountData.ID = acc.ID
+	status.AccountData = acc
 	//Ban logic
 	if false {
 		status.Status = ACCESS_DENIED_BANNED
