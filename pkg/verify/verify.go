@@ -128,7 +128,7 @@ func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api
 }
 
 func CheckForVerificationUpdate(storedAcc gw2api.Account, acc gw2api.Account) (err error) {
-	if storedAcc.World != acc.World || int(time.Since(acc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
+	if storedAcc.World != acc.World || int(time.Since(storedAcc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		err = OnVerificationUpdate(acc)
 	}
 	return err
