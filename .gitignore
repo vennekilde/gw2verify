@@ -27,3 +27,5 @@ _testmain.go
 \.vscode/launch\.json
 
 cmd/gw2verify/debug
+
+build/
