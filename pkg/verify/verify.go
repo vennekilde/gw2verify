@@ -45,7 +45,11 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, serviceID int, serviceUserID 
 		}
 	}
 
-	CheckForVerificationUpdate(acc)
+	storedAcc := gw2api.Account{}
+	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
+		return err, nil
+	}
+	CheckForVerificationUpdate(storedAcc, acc)
 
 	err = token.Persist(gw2API.Auth, acc.ID)
 	if err != nil {
@@ -123,12 +127,8 @@ func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api
 	return err
 }
 
-func CheckForVerificationUpdate(acc gw2api.Account) (err error) {
-	storedAcc := gw2api.Account{}
-	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
-		return err
-	}
-	if storedAcc.World != acc.World {
+func CheckForVerificationUpdate(storedAcc gw2api.Account, acc gw2api.Account) (err error) {
+	if storedAcc.World != acc.World || int(time.Since(acc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		err = OnVerificationUpdate(acc)
 	}
 	return err

@@ -97,7 +97,11 @@ func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []strin
 		return acc, err
 	}
 
-	CheckForVerificationUpdate(acc)
+	storedAcc := gw2api.Account{}
+	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
+		return acc, err
+	}
+	CheckForVerificationUpdate(storedAcc, acc)
 
 	acc.Persist()
 
