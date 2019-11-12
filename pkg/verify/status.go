@@ -157,7 +157,7 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 	if int(time.Since(acc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		//Check if last time token is expired
 		tokens := []gw2api.TokenInfo{}
-		orm.DB().Find(&tokens, "account_id = ? AND last_success >= db_updated - interval ?", acc.ID, string(config.Config().ExpirationTime)+"seconds")
+		orm.DB().Find(&tokens, "account_id = ? AND last_success >= db_updated - interval '? seconds'", acc.ID, config.Config().ExpirationTime)
 		if len(tokens) <= 0 {
 			//No valid api keys found, therefore must be expired
 			status.Status = ACCESS_DENIED_EXPIRED
