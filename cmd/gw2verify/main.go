@@ -21,8 +21,9 @@ func main() {
 		orm.DB().LogMode(true)
 	}
 
-	//orm.DB().AutoMigrate(gw2api.Account{}, gw2api.TokenInfo{})
+	orm.DB().AutoMigrate(&gw2api.Account{}, &gw2api.TokenInfo{})
 	//orm.DB().AutoMigrate(verify.ServiceLink{}, verify.TemporaryAccess{})
+	orm.DB().AutoMigrate(&verify.ServiceLink{}, &verify.TemporaryAccess{})
 
 	go api.StartServer()
 
