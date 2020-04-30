@@ -7,6 +7,7 @@ import (
 
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/config"
+	"github.com/vennekilde/gw2verify/pkg/history"
 
 	"github.com/golang/glog"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
@@ -101,6 +102,8 @@ func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []strin
 	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
 		return acc, err
 	}
+
+	history.CollectAccount(storedAcc, acc)
 	CheckForVerificationUpdate(storedAcc, acc)
 
 	acc.Persist()

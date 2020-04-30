@@ -8,6 +8,7 @@ import (
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/api"
 	"github.com/vennekilde/gw2verify/internal/config"
+	"github.com/vennekilde/gw2verify/pkg/history"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
@@ -22,8 +23,15 @@ func main() {
 	}
 
 	orm.DB().AutoMigrate(&gw2api.Account{}, &gw2api.TokenInfo{})
-	//orm.DB().AutoMigrate(verify.ServiceLink{}, verify.TemporaryAccess{})
+	orm.DB().AutoMigrate(&history.History{})
 	orm.DB().AutoMigrate(&verify.ServiceLink{}, &verify.TemporaryAccess{})
+
+	/*go func() {
+		statistics.Collect()
+		for range time.Tick(time.Minute * 5) {
+			statistics.Collect()
+		}
+	}()*/
 
 	go api.StartServer()
 
