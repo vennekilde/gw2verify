@@ -157,7 +157,10 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 	if int(time.Since(acc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		//Check if last time token is expired
 		tokens := []gw2api.TokenInfo{}
-		orm.DB().Find(&tokens, "account_id = ? AND last_success >= db_updated - interval '? seconds'", acc.ID, config.Config().ExpirationTime)
+		//For some reason, the Go pg library complains with "pq: got 2 parameters but the statement requires 1"
+		//when the param is inside the ' ' closure, so we insert it as part of the string instead
+		//It's an int anyway and we trust the source, so it should be fine
+		orm.DB().Find(&tokens, "account_id = ? AND last_success >= db_updated - interval '"+string(config.Config().ExpirationTime)+" seconds'", acc.ID)
 		if len(tokens) <= 0 {
 			//No valid api keys found, therefore must be expired
 			status.Status = ACCESS_DENIED_EXPIRED
