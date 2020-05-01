@@ -74,11 +74,11 @@ func (status VerificationStatus) AccessDenied() bool {
 
 type ServiceLink struct {
 	gw2api.Gw2Model
-	AccountID              string `gorm:"type varchar(64);not null;unique_index"`
+	AccountID              string `gorm:"type varchar(64);not null"`
 	ServiceID              int    `gorm:"primary_key:true"`
 	ServiceUserID          string `gorm:"primary_key:true"`
 	IsPrimary              bool   `gorm:"not null"`
-	ServiceUserDisplayName string `gorm:"varchar(128);not null;unique_index"`
+	ServiceUserDisplayName string `gorm:"varchar(128);not null"`
 }
 
 type Configuration struct {
