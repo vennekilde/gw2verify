@@ -86,7 +86,7 @@ type Configuration struct {
 }
 
 var Config = Configuration{
-	LinkedWorlds: []int{2005},
+	LinkedWorlds: []int{2011},
 }
 
 func Status(serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink) {
