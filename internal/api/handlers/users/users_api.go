@@ -8,6 +8,9 @@ import (
 	"github.com/golang/glog"
 )
 
+//@TODO fix hardcoded later
+var HARD_CODED_WORLD_PERSPECTIVE = 2007
+
 // UsersAPI is API implementation of /users root endpoint
 type UsersAPI struct {
 }

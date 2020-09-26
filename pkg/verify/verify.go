@@ -16,7 +16,7 @@ import (
 	"github.com/vennekilde/gw2verify/internal/config"
 )
 
-func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
+func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
 	//Stip spaces
 	apikey = SpaceStringsBuilder(apikey)
 
@@ -39,7 +39,7 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, serviceID int, serviceUserID 
 	}
 
 	if ignoreRestrictions == false {
-		err = processRestrictions(gw2API, acc, token, serviceID, serviceUserID)
+		err = processRestrictions(gw2API, worldPerspective, acc, token, serviceID, serviceUserID)
 		if err != nil {
 			return err, err
 		}
@@ -76,7 +76,7 @@ func SpaceStringsBuilder(str string) string {
 	return b.String()
 }
 
-func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
+func processRestrictions(gw2api *gw2api.GW2Api, worldPerspective int, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
 
 	if config.Config().SkipRestrictions {
 		return nil
@@ -85,7 +85,7 @@ func processRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account, token gw2api
 	//Check if api key is named correctly
 	apiKeyCode := GetAPIKeyCode(serviceID, serviceUserID)
 	if strings.Contains(strings.ToUpper(token.Name), apiKeyCode) == false {
-		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", GetAPIKeyName(serviceID, serviceUserID), token.Name)
+		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", GetAPIKeyName(worldPerspective, serviceID, serviceUserID), token.Name)
 	}
 
 	freeToPlay := Contains(acc.Access, PlayForFree) && !Contains(acc.Access, GuildWars2)
@@ -141,10 +141,10 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 	}
 
 	for _, link := range links {
-		channel := updates.ServicePollListeners[link.ServiceID]
-		if channel != nil {
+		serviceListener := updates.ServicePollListeners[link.ServiceID]
+		if serviceListener.Listener != nil {
 			acc.DbUpdated = time.Now().UTC()
-			status, _ := StatusWithAccount(link.ServiceID, link.ServiceUserID, &acc)
+			status, _ := StatusWithAccount(serviceListener.WorldPerspective, link.ServiceID, link.ServiceUserID, &acc)
 			verificationStatus := types.VerificationStatus{
 				Account_id: status.AccountData.ID,
 				Expires:    status.Expires,
@@ -157,7 +157,7 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 					},
 				},
 			}
-			channel <- verificationStatus
+			serviceListener.Listener <- verificationStatus
 		}
 	}
 

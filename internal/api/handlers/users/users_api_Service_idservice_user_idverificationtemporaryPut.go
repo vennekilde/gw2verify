@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
@@ -21,6 +22,7 @@ func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.Res
 		return
 	}
 	var reqBody types.TemporaryData
+	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -35,11 +37,16 @@ func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.Res
 		reqBody.Access_type = types.AccessType(strings.ToUpper(string(reqBody.Access_type)))
 		if reqBody.Access_type == types.AccessTypeHOME_WORLD {
 			// Grant Home World temporary access
-			world = config.Config().HomeWorld
+			world = worldPerspective
 		} else if reqBody.Access_type == types.AccessTypeLINKED_WORLD {
 			// Grant Linked World temporary access
-			if len(verify.Config.LinkedWorlds) > 0 {
-				world = verify.Config.LinkedWorlds[0]
+			worldLinks, err := verify.GetWorldLinks(worldPerspective)
+			if err != nil {
+				glog.Error(err)
+				w.WriteHeader(400)
+			}
+			if len(worldLinks) > 0 {
+				world = worldLinks[0]
 			} else {
 				// Not linked with another world, so cannot temporary grant linked world access
 				// @TODO Consider just setting the user to home world temporary in this case

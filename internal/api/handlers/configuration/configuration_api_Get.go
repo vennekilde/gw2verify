@@ -17,12 +17,17 @@ func (api ConfigurationAPI) Get(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}
+	links := verify.GetAllWorldLinks()
+	values := make([]types.WorldLinks, 0, len(links))
+	for _, v := range links {
+		values = append(values, v)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	respBody := types.Configuration{
 		Expiration_time:                  config.Config().ExpirationTime,
 		Temporary_access_expiration_time: config.Config().TemporaryAccessExpirationTime,
-		Home_world:                       config.Config().HomeWorld,
-		Link_worlds:                      verify.Config.LinkedWorlds,
+		World_links:                      values,
 	}
 	json.NewEncoder(w).Encode(&respBody)
 }

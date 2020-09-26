@@ -6,10 +6,9 @@ import (
 )
 
 type Configuration struct {
-	Expiration_time                  int   `json:"expiration_time" validate:"nonzero"`
-	Home_world                       int   `json:"home_world" validate:"nonzero"`
-	Link_worlds                      []int `json:"link_worlds" validate:"nonzero"`
-	Temporary_access_expiration_time int   `json:"temporary_access_expiration_time" validate:"nonzero"`
+	Expiration_time                  int          `json:"expiration_time" validate:"nonzero"`
+	Temporary_access_expiration_time int          `json:"temporary_access_expiration_time" validate:"nonzero"`
+	World_links                      []WorldLinks `json:"world_links" validate:"nonzero"`
 }
 
 func (s Configuration) Validate() error {

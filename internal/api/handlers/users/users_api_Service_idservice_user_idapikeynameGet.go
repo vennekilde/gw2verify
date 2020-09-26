@@ -17,6 +17,7 @@ func (api UsersAPI) Service_idservice_user_idapikeynameGet(w http.ResponseWriter
 	if apiservice.Permitted(w, r) == false {
 		return
 	}
+	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
 
 	//URL Params
 	params := mux.Vars(r)
@@ -28,6 +29,6 @@ func (api UsersAPI) Service_idservice_user_idapikeynameGet(w http.ResponseWriter
 	}
 	serviceUserID := params["service_user_id"]
 
-	apikeyName := verify.GetAPIKeyName(serviceIDInt, serviceUserID)
+	apikeyName := verify.GetAPIKeyName(worldPerspective, serviceIDInt, serviceUserID)
 	RespWithSuccess(w, r, types.APIKeyName{Name: apikeyName})
 }

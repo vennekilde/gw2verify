@@ -20,6 +20,7 @@ func (api UsersAPI) Service_idservice_user_idapikeyPut(w http.ResponseWriter, r 
 		return
 	}
 	var reqBody types.APIKeyData
+	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
 
 	// decode request
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -53,7 +54,7 @@ func (api UsersAPI) Service_idservice_user_idapikeyPut(w http.ResponseWriter, r 
 	}
 
 	gw2a := gw2api.NewGW2Api()
-	err, userErr := verify.SetAPIKeyByUserService(gw2a, serviceIDInt, serviceUserID, reqBody.Primary, reqBody.Apikey, skipRequirements)
+	err, userErr := verify.SetAPIKeyByUserService(gw2a, worldPerspective, serviceIDInt, serviceUserID, reqBody.Primary, reqBody.Apikey, skipRequirements)
 	if err != nil {
 		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return

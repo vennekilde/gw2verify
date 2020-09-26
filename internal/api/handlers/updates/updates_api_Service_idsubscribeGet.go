@@ -9,13 +9,26 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2verify/internal/api/types"
+	"github.com/vennekilde/gw2verify/internal/apiservice"
 )
 
-var ServicePollListeners map[int]chan types.VerificationStatus = make(map[int]chan types.VerificationStatus)
+type VerifictionStatusListener struct {
+	WorldPerspective int
+	ServiceID        int
+	Listener         chan types.VerificationStatus
+}
+
+var ServicePollListeners map[int]VerifictionStatusListener = make(map[int]VerifictionStatusListener)
+
+//@TODO fix hardcoded later
+var HARD_CODED_WORLD_PERSPECTIVE = 2007
 
 // Service_idsubscribeGet is the handler for GET /updates/{service_id}/subscribe
 // Long polling rest endpoint for receiving verification updates
 func (api UpdatesAPI) Service_idsubscribeGet(w http.ResponseWriter, r *http.Request) {
+	if apiservice.Permitted(w, r) == false {
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
@@ -29,20 +42,22 @@ func (api UpdatesAPI) Service_idsubscribeGet(w http.ResponseWriter, r *http.Requ
 	ticker := time.NewTicker(120 * time.Second)
 	defer func() { ticker.Stop() }()
 
-	if ServicePollListeners[serviceIDInt] == nil {
-		ServicePollListeners[serviceIDInt] = make(chan types.VerificationStatus, 100)
-	}
-
-	for {
-		select {
-		case event := <-ServicePollListeners[serviceIDInt]:
-			w.WriteHeader(200)
-			json.NewEncoder(w).Encode(&event)
-			return
-		case <-ticker.C:
-			w.WriteHeader(408)
-			return
+	statusListener := ServicePollListeners[serviceIDInt]
+	if statusListener.Listener == nil {
+		statusListener = VerifictionStatusListener{
+			ServiceID:        serviceIDInt,
+			WorldPerspective: HARD_CODED_WORLD_PERSPECTIVE,
+			Listener:         make(chan types.VerificationStatus),
 		}
+		ServicePollListeners[serviceIDInt] = statusListener
 	}
 
+	select {
+	case event := <-statusListener.Listener:
+		w.WriteHeader(200)
+		json.NewEncoder(w).Encode(&event)
+	case <-ticker.C:
+		w.WriteHeader(408)
+	}
+	statusListener.Listener = nil
 }

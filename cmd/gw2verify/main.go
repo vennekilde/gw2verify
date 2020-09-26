@@ -36,5 +36,6 @@ func main() {
 	go api.StartServer()
 
 	gw2api := gw2api.NewGW2Api()
+	go verify.BeginWorldLinksSyncLoop(gw2api)
 	verify.StartAPISynchronizer(gw2api)
 }

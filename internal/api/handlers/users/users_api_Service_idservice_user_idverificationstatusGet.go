@@ -24,6 +24,7 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 	if apiservice.Permitted(w, r) == false {
 		return
 	}
+	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
 
 	w.Header().Set("Content-Type", "application/json")
 	//URL Params
@@ -35,7 +36,7 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	status, link := verify.Status(serviceIDInt, serviceUserID)
+	status, link := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
 	linkREST := types.ServiceLink{
 		Display_name:    link.ServiceUserDisplayName,
 		Service_id:      link.ServiceID,

@@ -4,6 +4,14 @@ baseUri: https://farshiverpeaks.com:8321/{version}
 version: v1
 
 traits:
+    world_oriented:
+        headers:
+            world:
+                type: integer
+                required: false
+        responses:
+            400:
+                description: Invalid world id provided
     secured:
         headers:
             X-Access-Token:
@@ -15,7 +23,7 @@ traits:
 
 /configuration:
     get:
-        is: [secured]
+        is: [secured, world_oriented]
         description: Get a configuration containing relevant information for running a service bot
         responses:
             200:
@@ -30,6 +38,7 @@ traits:
                 description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
         /subscribe:
             get:
+                is: [secured, world_oriented]
                 description: Long polling rest endpoint for receiving verification updates
                 responses:
                     200:
@@ -94,7 +103,7 @@ traits:
                                 description: User does not have the requested property
             /apikey:
                 put:
-                    is: [secured]
+                    is: [secured, world_oriented]
                     description: Set a service user's API key
                     queryParameters:
                         skip-requirements:
@@ -115,7 +124,7 @@ traits:
                                     type: Error
                 /name:
                     get:
-                        is: [secured]
+                        is: [secured, world_oriented]
                         description: Get a service user's apikey name they are required to use if apikey name restriction is enforced
                         responses:
                             200:
@@ -129,7 +138,7 @@ traits:
             /verification:
                 /refresh:
                     post:
-                        is: [secured]
+                        is: [secured, world_oriented]
                         description: Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
                         responses:
                             200:
@@ -146,7 +155,7 @@ traits:
                                         type: Error
                 /status:
                     get:
-                        is: [secured]
+                        is: [secured, world_oriented]
                         description: Get a users verification status
                         queryParameters:
                             display_name:
@@ -164,7 +173,7 @@ traits:
                                         type: Error
                 /temporary:
                     put:
-                        is: [secured]
+                        is: [secured, world_oriented]
                         description: Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
                         body:
                             application/json:
@@ -210,12 +219,11 @@ types:
                 type: integer
             temporary_access_expiration_time:
                 type: integer
-            home_world:
-                type: integer
-                description: World id used a home world
-            link_worlds:
-                type: integer[]
-                description: List of worlds linked with the home world
+            world_links:
+                type: WorldLinks[]
+                description: List of worlds links
+    WorldLinks:
+        type: integer[]
     VerificationStatus:
         type: object
         properties:

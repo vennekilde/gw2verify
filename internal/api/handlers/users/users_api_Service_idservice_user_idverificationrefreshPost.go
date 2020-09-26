@@ -16,6 +16,8 @@ import (
 // Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
 func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
+
 	//URL Params
 	params := mux.Vars(r)
 	serviceID := params["service_id"]
@@ -32,7 +34,7 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
-	status, _ := verify.Status(serviceIDInt, serviceUserID)
+	status, _ := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
 	var respBody types.VerificationStatus
 	respBody.Status = types.EnumVerificationStatusStatus(status.Status.Name())
 	respBody.Account_id = status.AccountData.ID

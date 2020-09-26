@@ -82,17 +82,13 @@ type ServiceLink struct {
 }
 
 type Configuration struct {
-	LinkedWorlds []int
+	LinkedWorlds map[int][]int
 }
 
-var Config = Configuration{
-	LinkedWorlds: []int{2011},
+func Status(worldPerspective int, serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink) {
+	return StatusWithAccount(worldPerspective, serviceID, serviceUserID, nil)
 }
-
-func Status(serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink) {
-	return StatusWithAccount(serviceID, serviceUserID, nil)
-}
-func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink) {
+func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink) {
 	if serviceUserID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status, link
@@ -109,7 +105,7 @@ func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Acco
 			acc = *accData
 		}
 		if err == nil {
-			status = AccountStatus(acc)
+			status = AccountStatus(acc, worldPerspective)
 			//Return status if access has been granted, or if the user is banned
 			if status.Status.AccessGranted() || status.Status == ACCESS_DENIED_BANNED {
 				return status, link
@@ -126,11 +122,17 @@ func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Acco
 			status.Status = ACCESS_DENIED_EXPIRED
 			return status, link
 		}
-		if tempAccess.World == config.Config().HomeWorld {
+		if tempAccess.World == worldPerspective {
 			status.Status = ACCESS_GRANTED_HOME_WORLD_TEMPORARY
 			return status, link
 		}
-		for _, world := range Config.LinkedWorlds {
+		//Get cached world links
+		worldLinks, err := GetWorldLinks(worldPerspective)
+		if err != nil {
+			status.Status = ACCESS_DENIED_UNKNOWN
+			return status, link
+		}
+		for _, world := range worldLinks {
 			if world == tempAccess.World {
 				status.Status = ACCESS_GRANTED_LINKED_WORLD_TEMPORARY
 				return status, link
@@ -143,7 +145,7 @@ func StatusWithAccount(serviceID int, serviceUserID string, accData *gw2api.Acco
 	return status, link
 }
 
-func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
+func AccountStatus(acc gw2api.Account, worldPerspective int) (status VerificationStatusExt) {
 	if acc.ID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status
@@ -155,6 +157,7 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 		return status
 	}
 
+	//Check if access is expired
 	if int(time.Since(acc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		//Check if last time token is expired
 		tokens := []gw2api.TokenInfo{}
@@ -169,11 +172,18 @@ func AccountStatus(acc gw2api.Account) (status VerificationStatusExt) {
 		}
 	}
 
-	if acc.World == config.Config().HomeWorld {
+	if acc.World == worldPerspective {
 		status.Status = ACCESS_GRANTED_HOME_WORLD
 		return status
 	}
-	for _, world := range Config.LinkedWorlds {
+
+	//Get cached world links
+	worldLinks, err := GetWorldLinks(worldPerspective)
+	if err != nil {
+		status.Status = ACCESS_DENIED_UNKNOWN
+		return status
+	}
+	for _, world := range worldLinks {
 		if world == acc.World {
 			status.Status = ACCESS_GRANTED_LINKED_WORLD
 			return status
