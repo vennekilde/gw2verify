@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/vennekilde/gw2verify/internal/config"
+	"github.com/golang/glog"
 )
 
 type AuthToken struct {
@@ -22,6 +23,7 @@ func Permitted(w http.ResponseWriter, r *http.Request) bool {
 		//}
 	}
 
+	glog.Warningf("Could not verify token on request {URI: %s, RemoteAddr: %s} token: %s", r.RequestURI, r.RemoteAddr, token) 
 	w.WriteHeader(http.StatusForbidden)
 	return false
 }
