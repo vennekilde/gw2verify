@@ -89,13 +89,17 @@ func Status(worldPerspective int, serviceID int, serviceUserID string) (status V
 	return StatusWithAccount(worldPerspective, serviceID, serviceUserID, nil)
 }
 func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink) {
+	var err error
 	if serviceUserID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status, link
 	}
 
 	//Check if user is linked to a gw2 account
-	err := orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error
+	if err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
+		status.Status = ACCESS_DENIED_UNKNOWN
+		return status, link
+	}
 	if link.AccountID != "" {
 		//Check verification status of linked account
 		acc := gw2api.Account{}
@@ -114,8 +118,11 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	}
 
 	tempAccess := TemporaryAccess{}
-	err = orm.DB().First(&tempAccess, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error
-	if err == nil && tempAccess.ServiceUserID != "" {
+	if err = orm.DB().First(&tempAccess, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
+		status.Status = ACCESS_DENIED_UNKNOWN
+		return status, link
+	}
+	if tempAccess.ServiceUserID != "" {
 		timeSinceGranted := int(time.Since(tempAccess.DbUpdated).Seconds())
 		status.Expires = config.Config().TemporaryAccessExpirationTime - timeSinceGranted
 		if timeSinceGranted >= config.Config().TemporaryAccessExpirationTime {
