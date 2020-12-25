@@ -37,7 +37,7 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 			continue
 		}
 
-		tokeninfo.APIKey = SpaceStringsBuilder(tokeninfo.APIKey)
+		tokeninfo.APIKey = spaceStringsBuilder(tokeninfo.APIKey)
 
 		acc, err = SynchronizeAPIKey(gw2API, tokeninfo.APIKey, tokeninfo.Permissions)
 		if err != nil {

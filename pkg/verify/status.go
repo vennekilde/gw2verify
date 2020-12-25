@@ -15,6 +15,7 @@ type VerificationStatusExt struct {
 	Expires     int
 	AccountData gw2api.Account
 	ServiceLink ServiceLink
+	Description string
 }
 
 type VerificationStatus int
@@ -29,6 +30,7 @@ const (
 	ACCESS_DENIED_EXPIRED                 VerificationStatus = 6
 	ACCESS_DENIED_INVALID_WORLD           VerificationStatus = 7
 	ACCESS_DENIED_BANNED                  VerificationStatus = 8
+	ACCESS_DENIED_REQUIREMENT_NOT_MET     VerificationStatus = 9
 )
 
 const (
@@ -59,6 +61,8 @@ func (status VerificationStatus) Name() string {
 		return "ACCESS_DENIED_INVALID_WORLD"
 	case 8:
 		return "ACCESS_DENIED_BANNED"
+	case 9:
+		return "ACCESS_DENIED_REQUIREMENT_NOT_MET"
 	default:
 		return "UNKNOWN"
 	}
@@ -152,6 +156,7 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	return status, link
 }
 
+// AccountStatus checks the verification access status for an account given a world perspective
 func AccountStatus(acc gw2api.Account, worldPerspective int) (status VerificationStatusExt) {
 	if acc.ID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
@@ -159,8 +164,10 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	}
 	status.AccountData = acc
 	//Ban logic
-	if false {
+	banStatus := GetBan(acc)
+	if banStatus != nil {
 		status.Status = ACCESS_DENIED_BANNED
+		status.Description = "Banned until " + banStatus.Expires.String() + " \nReason: " + banStatus.Reason
 		return status
 	}
 
@@ -177,6 +184,12 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 			status.Status = ACCESS_DENIED_EXPIRED
 			return status
 		}
+	}
+
+	if err := processAccountRestrictions(worldPerspective, acc); err != nil {
+		status.Status = ACCESS_DENIED_REQUIREMENT_NOT_MET
+		status.Description = err.Error()
+		return status
 	}
 
 	if acc.World == worldPerspective {

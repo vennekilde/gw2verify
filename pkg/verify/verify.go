@@ -16,9 +16,13 @@ import (
 	"github.com/vennekilde/gw2verify/internal/config"
 )
 
+// FreeToPlayWvWRankRestriction restricts the minimum required wvw rank before free to play users can verify
+var FreeToPlayWvWRankRestriction = 0
+
+// SetAPIKeyByUserService sets an apikey from a user of a specific service
 func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
 	//Stip spaces
-	apikey = SpaceStringsBuilder(apikey)
+	apikey = spaceStringsBuilder(apikey)
 
 	if err = gw2API.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
@@ -65,7 +69,7 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 	return nil, SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
 }
 
-func SpaceStringsBuilder(str string) string {
+func spaceStringsBuilder(str string) string {
 	var b strings.Builder
 	b.Grow(len(str))
 	for _, ch := range str {
@@ -77,27 +81,64 @@ func SpaceStringsBuilder(str string) string {
 }
 
 func processRestrictions(gw2api *gw2api.GW2Api, worldPerspective int, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
-
 	if config.Config().SkipRestrictions {
 		return nil
 	}
+	if err := processAPIKeyRestrictions(worldPerspective, acc, token, serviceID, serviceUserID); err != nil {
+		return err
+	}
+	if err := processAccountRestrictions(worldPerspective, acc); err != nil {
+		return err
+	}
+	if err := processCharacterRestrictions(gw2api, acc); err != nil {
+		return err
+	}
+	return nil
+}
 
+func processAPIKeyRestrictions(worldPerspective int, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {
 	//Check if api key is named correctly
 	apiKeyCode := GetAPIKeyCode(serviceID, serviceUserID)
 	if strings.Contains(strings.ToUpper(token.Name), apiKeyCode) == false {
 		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", GetAPIKeyName(worldPerspective, serviceID, serviceUserID), token.Name)
 	}
 
-	freeToPlay := Contains(acc.Access, PlayForFree) && !Contains(acc.Access, GuildWars2)
+	freeToPlay := IsFreeToPlay(acc)
 
 	//FreeToPlay restrictions
 	if freeToPlay {
+		//Ensure progression permission is present
+		hasProgression := Contains(token.Permissions, "progression")
+
 		//Ensure characters permission is present
 		hasCharacters := Contains(token.Permissions, "characters")
-		if !hasCharacters {
-			return errors.New("Missing apikey permission \"characters\".\nYou are trying to verify a FreeToPlay account and is therefore required to have a level 80 character")
-		}
 
+		if !hasProgression || !hasCharacters {
+			return errors.New("Missing apikey permission \"characters\" and or \"progression\".\nYou are trying to verify a FreeToPlay account and is therefore required to have a level 80 character")
+		}
+	}
+
+	return err
+}
+
+func processAccountRestrictions(worldPerspective int, acc gw2api.Account) (err error) {
+	freeToPlay := IsFreeToPlay(acc)
+
+	//FreeToPlay restrictions
+	if freeToPlay {
+		//Check if FreeToPlay player meets WvW rank requirements
+		if acc.WvWRank < FreeToPlayWvWRankRestriction {
+			return fmt.Errorf("You need to have WvW rank %d to verify yourself. This is required for all FreeToPlay accounts\nCurrent WvW rank: %d", FreeToPlayWvWRankRestriction, acc.WvWRank)
+		}
+	}
+	return err
+}
+
+func processCharacterRestrictions(gw2api *gw2api.GW2Api, acc gw2api.Account) (err error) {
+	freeToPlay := IsFreeToPlay(acc)
+
+	//FreeToPlay restrictions
+	if freeToPlay {
 		//Fetch character names
 		charNames, err := gw2api.Characters()
 		if err != nil {
@@ -127,6 +168,8 @@ func processRestrictions(gw2api *gw2api.GW2Api, worldPerspective int, acc gw2api
 	return err
 }
 
+// CheckForVerificationUpdate checks if the verification status for the user has changed since last synchronization
+// If it has, it will send out a notification to all registered listeners
 func CheckForVerificationUpdate(storedAcc gw2api.Account, acc gw2api.Account) (err error) {
 	if storedAcc.World != acc.World || int(time.Since(storedAcc.DbUpdated).Seconds()) >= config.Config().ExpirationTime {
 		err = OnVerificationUpdate(acc)
@@ -134,6 +177,7 @@ func CheckForVerificationUpdate(storedAcc gw2api.Account, acc gw2api.Account) (e
 	return err
 }
 
+// OnVerificationUpdate sends out a verification notification to all registered listeners
 func OnVerificationUpdate(acc gw2api.Account) (err error) {
 	links := []ServiceLink{}
 	if err = orm.DB().Find(&links, "account_id = ?", acc.ID).Error; err != nil {
@@ -150,7 +194,7 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 				Expires:    status.Expires,
 				Status:     types.EnumVerificationStatusStatus(status.Status.Name()),
 				Service_links: []types.ServiceLink{
-					types.ServiceLink{
+					{
 						Display_name:    link.ServiceUserDisplayName,
 						Service_id:      link.ServiceID,
 						Service_user_id: link.ServiceUserID,
@@ -164,6 +208,7 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 	return err
 }
 
+// SetOrReplaceServiceLink creates or replaces a service link between a service user and an account
 func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, accountID string) (err error) {
 	link := ServiceLink{}
 	if primary {
@@ -187,6 +232,7 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 	return err
 }
 
+// Contains checks if a slice contains the given item
 func Contains(slice []string, item string) bool {
 	for _, itemInSlice := range slice {
 		if itemInSlice == item {
@@ -194,4 +240,9 @@ func Contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// IsFreeToPlay returns true if the account is a free to play account
+func IsFreeToPlay(acc gw2api.Account) bool {
+	return Contains(acc.Access, PlayForFree) && !Contains(acc.Access, GuildWars2)
 }

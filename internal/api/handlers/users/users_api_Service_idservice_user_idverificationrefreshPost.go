@@ -39,6 +39,9 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 	respBody.Status = types.EnumVerificationStatusStatus(status.Status.Name())
 	respBody.Account_id = status.AccountData.ID
 	respBody.Expires = status.Expires
+	if status.Status == verify.ACCESS_DENIED_BANNED {
+		respBody.Ban_reason = status.Description
+	}
 
 	json.NewEncoder(w).Encode(&respBody)
 }

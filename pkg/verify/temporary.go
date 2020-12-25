@@ -7,6 +7,7 @@ import (
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 )
 
+// TemporaryAccess represents a user that has been granted temporary access from a given world
 type TemporaryAccess struct {
 	gw2api.Gw2Model
 	ServiceID     int    `gorm:"primary_key:true"`
@@ -14,6 +15,8 @@ type TemporaryAccess struct {
 	World         int    `gorm:"not null"`
 }
 
+// GrantTemporaryWorldAssignment temporarily mark the account as being from the given world
+// This will grant the user temporary access, if they are set to be a from a world that would normally grant access
 func GrantTemporaryWorldAssignment(serviceID int, serviceUserID string, world int) (err error, userErr error) {
 	temporaryAccess := TemporaryAccess{
 		ServiceUserID: serviceUserID,

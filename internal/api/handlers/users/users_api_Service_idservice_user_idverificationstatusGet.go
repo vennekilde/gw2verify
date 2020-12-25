@@ -51,5 +51,9 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 		},
 		AccountData: status.AccountData,
 	}
+
+	if status.Status == verify.ACCESS_DENIED_BANNED {
+		respBody.Ban_reason = status.Description
+	}
 	json.NewEncoder(w).Encode(&respBody)
 }
