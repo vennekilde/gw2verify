@@ -2,12 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "D:\\OneDrive\\projects\\gw2verify-wui"
-		},
-		{
-			"path": "C:\\Users\\venne\\go\\src\\github.com\\vennekilde\\gw2apidb"
 		}
 	],
 	"settings": {}
