@@ -1,4 +1,4 @@
-FROM golang:1.12.0-alpine3.9
+FROM golang:1.15
 
 RUN apk add --virtual .build-dependencies git  
 WORKDIR /$GOPATH/src/github.com/vennekilde/gw2verify
