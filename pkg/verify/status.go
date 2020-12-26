@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/config"
 
@@ -102,7 +103,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 
 	//Check if user is linked to a gw2 account
 	if err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
-		glog.Error(err)
+		if err != gorm.ErrRecordNotFound {
+			glog.Error(err)
+		}
 		status.Status = ACCESS_DENIED_UNKNOWN
 		return status, link
 	}
@@ -125,7 +128,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 
 	tempAccess := TemporaryAccess{}
 	if err = orm.DB().First(&tempAccess, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
-		glog.Error(err)
+		if err != gorm.ErrRecordNotFound {
+			glog.Error(err)
+		}
 		status.Status = ACCESS_DENIED_UNKNOWN
 		return status, link
 	}
@@ -143,7 +148,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 		//Get cached world links
 		worldLinks, err := GetWorldLinks(worldPerspective)
 		if err != nil {
-			glog.Error(err)
+			if err != gorm.ErrRecordNotFound {
+				glog.Error(err)
+			}
 			status.Status = ACCESS_DENIED_UNKNOWN
 			return status, link
 		}
@@ -205,7 +212,9 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	//Get cached world links
 	worldLinks, err := GetWorldLinks(worldPerspective)
 	if err != nil {
-		glog.Error(err)
+		if err != gorm.ErrRecordNotFound {
+			glog.Error(err)
+		}
 		status.Status = ACCESS_DENIED_UNKNOWN
 		return status
 	}
