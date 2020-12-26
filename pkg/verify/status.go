@@ -13,7 +13,7 @@ import (
 
 type VerificationStatusExt struct {
 	Status      VerificationStatus
-	Expires     int
+	Expires     int64
 	AccountData gw2api.Account
 	ServiceLink ServiceLink
 	Description string
@@ -131,7 +131,7 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	}
 	if tempAccess.ServiceUserID != "" {
 		timeSinceGranted := int(time.Since(tempAccess.DbUpdated).Seconds())
-		status.Expires = config.Config().TemporaryAccessExpirationTime - timeSinceGranted
+		status.Expires = int64(config.Config().TemporaryAccessExpirationTime - timeSinceGranted)
 		if timeSinceGranted >= config.Config().TemporaryAccessExpirationTime {
 			status.Status = ACCESS_DENIED_EXPIRED
 			return status, link
@@ -171,6 +171,7 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	banStatus := GetBan(acc)
 	if banStatus != nil {
 		status.Status = ACCESS_DENIED_BANNED
+		status.Expires = banStatus.Expires.Sub(time.Now()).Milliseconds()
 		status.Description = "Banned until " + banStatus.Expires.String() + " \nReason: " + banStatus.Reason
 		return status
 	}

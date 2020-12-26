@@ -2,9 +2,8 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 // UpdatesInterface is interface for /updates root endpoint

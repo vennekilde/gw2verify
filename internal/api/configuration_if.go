@@ -2,9 +2,8 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 // ConfigurationInterface is interface for /configuration root endpoint

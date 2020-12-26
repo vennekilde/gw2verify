@@ -13,4 +13,5 @@ const (
 	EnumVerificationStatusStatusACCESS_DENIED_EXPIRED                 EnumVerificationStatusStatus = "ACCESS_DENIED_EXPIRED"
 	EnumVerificationStatusStatusACCESS_DENIED_INVALID_WORLD           EnumVerificationStatusStatus = "ACCESS_DENIED_INVALID_WORLD"
 	EnumVerificationStatusStatusACCESS_DENIED_BANNED                  EnumVerificationStatusStatus = "ACCESS_DENIED_BANNED"
+	EnumVerificationStatusStatusACCESS_DENIED_REQUIREMENT_NOT_MET     EnumVerificationStatusStatus = "ACCESS_DENIED_REQUIREMENT_NOT_MET"
 )
