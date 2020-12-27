@@ -105,9 +105,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	if err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			glog.Error(err)
+			status.Status = ACCESS_DENIED_UNKNOWN
+			return status, link
 		}
-		status.Status = ACCESS_DENIED_UNKNOWN
-		return status, link
 	}
 	if link.AccountID != "" {
 		//Check verification status of linked account
@@ -130,9 +130,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	if err = orm.DB().First(&tempAccess, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
 			glog.Error(err)
+			status.Status = ACCESS_DENIED_UNKNOWN
+			return status, link
 		}
-		status.Status = ACCESS_DENIED_UNKNOWN
-		return status, link
 	}
 	if tempAccess.ServiceUserID != "" {
 		timeSinceGranted := int(time.Since(tempAccess.DbUpdated).Seconds())
