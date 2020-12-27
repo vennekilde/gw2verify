@@ -13,9 +13,6 @@ type UsersInterface interface { // Service_idservice_user_idapikeynameGet is the
 	// Service_idservice_user_idapikeyPut is the handler for PUT /users/{service_id}/{service_user_id}/apikey
 	// Set a service user's API key
 	Service_idservice_user_idapikeyPut(http.ResponseWriter, *http.Request)
-	// Service_idservice_user_idbanPut is the handler for PUT /users/{service_id}/{service_user_id}/ban
-	// Ban a user's gw2 account from being verified
-	Service_idservice_user_idbanPut(http.ResponseWriter, *http.Request)
 	// Service_idservice_user_idpropertiespropertyGet is the handler for GET /users/{service_id}/{service_user_id}/properties/{property}
 	// Get a user property
 	Service_idservice_user_idpropertiespropertyGet(http.ResponseWriter, *http.Request)
@@ -40,7 +37,7 @@ type UsersInterface interface { // Service_idservice_user_idapikeynameGet is the
 func UsersInterfaceRoutes(r *mux.Router, i UsersInterface) {
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/apikey", i.Service_idservice_user_idapikeyPut).Methods("PUT")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/apikey/name", i.Service_idservice_user_idapikeynameGet).Methods("GET")
-	r.HandleFunc("/users/{service_id}/{service_user_id}/ban", i.Service_idservice_user_idbanPut).Methods("PUT")
+	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties/{property}", i.Service_idservice_user_idpropertiespropertyGet).Methods("GET")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties", i.Service_idservice_user_idpropertiesGet).Methods("GET")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/properties", i.Service_idservice_user_idpropertiesPut).Methods("PUT")
 	r.HandleFunc("/v1/users/{service_id}/{service_user_id}/verification/refresh", i.Service_idservice_user_idverificationrefreshPost).Methods("POST")
