@@ -110,7 +110,7 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 		//Check verification status of linked account
 		var acc gw2api.Account
 		if accData == nil {
-			if err = orm.DB().First(acc, "id = ?", link.AccountID).Error; err != nil {
+			if err = orm.DB().First(&acc, "id = ?", link.AccountID).Error; err != nil {
 				if err != gorm.ErrRecordNotFound {
 					status.Status = ACCESS_DENIED_UNKNOWN
 					return status, link, err
