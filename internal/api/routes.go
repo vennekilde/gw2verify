@@ -10,7 +10,7 @@ import (
 )
 
 func initRoutes(r *mux.Router) {
-
+	
 	ConfigurationInterfaceRoutes(r, configuration.ConfigurationAPI{})
 	UpdatesInterfaceRoutes(r, updates.UpdatesAPI{})
 	UsersInterfaceRoutes(r, users.UsersAPI{})

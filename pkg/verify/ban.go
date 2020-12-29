@@ -25,3 +25,18 @@ func GetBan(acc gw2api.Account) *Ban {
 	}
 	return &ban
 }
+
+// BanServiceUser bans a user's gw2 account for the given duration
+func BanServiceUser(duration time.Duration, reason string, serviceID int, serviceUserID string) error {
+	var link ServiceLink
+	if err := orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
+		return err
+	}
+	ban := Ban{
+		AccountID: link.AccountID,
+		Expires:   time.Now().Add(duration),
+		Reason:    reason,
+	}
+	result := orm.DB().Save(&ban)
+	return result.Error
+}

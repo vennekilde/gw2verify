@@ -101,6 +101,23 @@ traits:
                                         type: Property
                             404:
                                 description: User does not have the requested property
+            /ban:
+                put:
+                    is: [secured]
+                    description: Ban a user's gw2 account from being verified
+                    body:
+                        application/json:
+                            type: BanData
+                    responses:
+                        200:
+                        400:
+                            body:
+                                application/json:
+                                    type: Error
+                        500:
+                            body:
+                                application/json:
+                                    type: Error
             /apikey:
                 put:
                     is: [secured, world_oriented]
@@ -201,6 +218,14 @@ types:
             error:
                 type: string
             safe-display-error:
+                type: string
+    BanData:
+        type: object
+        properties:
+            duration:
+                type: integer
+                format: int64
+            reason:
                 type: string
     Property:
         type: object

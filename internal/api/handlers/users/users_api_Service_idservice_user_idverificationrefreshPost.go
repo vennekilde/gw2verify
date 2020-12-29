@@ -9,12 +9,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2verify/internal/api/types"
+	"github.com/vennekilde/gw2verify/internal/apiservice"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
 // Service_idservice_user_idverificationrefreshPost is the handler for POST /users/{service_id}/{service_user_id}/verification/refresh
 // Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
 func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.ResponseWriter, r *http.Request) {
+	if apiservice.Permitted(w, r) == false {
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	worldPerspective := HARD_CODED_WORLD_PERSPECTIVE
 
