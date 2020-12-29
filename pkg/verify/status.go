@@ -150,9 +150,9 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
 				glog.Error(err)
+				status.Status = ACCESS_DENIED_UNKNOWN
+				return status, link
 			}
-			status.Status = ACCESS_DENIED_UNKNOWN
-			return status, link
 		}
 		for _, world := range worldLinks {
 			if world == tempAccess.World {
@@ -214,9 +214,9 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			glog.Error(err)
+			status.Status = ACCESS_DENIED_UNKNOWN
+			return status
 		}
-		status.Status = ACCESS_DENIED_UNKNOWN
-		return status
 	}
 	for _, world := range worldLinks {
 		if world == acc.World {
