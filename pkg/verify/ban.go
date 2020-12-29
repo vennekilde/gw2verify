@@ -37,6 +37,13 @@ func BanServiceUser(duration time.Duration, reason string, serviceID int, servic
 		Expires:   time.Now().Add(duration),
 		Reason:    reason,
 	}
-	result := orm.DB().Save(&ban)
-	return result.Error
+	if err := orm.DB().Save(&ban).Error; err != nil {
+		return err
+	}
+
+	var acc gw2api.Account
+	if err := orm.DB().First(&acc, "id = ?", link.AccountID).Error; err != nil {
+		return err
+	}
+	return OnVerificationUpdate(acc)
 }
