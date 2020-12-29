@@ -188,7 +188,11 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 		serviceListener := updates.ServicePollListeners[link.ServiceID]
 		if serviceListener.Listener != nil {
 			acc.DbUpdated = time.Now().UTC()
-			status, _ := StatusWithAccount(serviceListener.WorldPerspective, link.ServiceID, link.ServiceUserID, &acc)
+			status, _, err := StatusWithAccount(serviceListener.WorldPerspective, link.ServiceID, link.ServiceUserID, &acc)
+			if err != nil {
+				glog.Error(err)
+				continue
+			}
 			verificationStatus := types.VerificationStatus{
 				Account_id: status.AccountData.ID,
 				Expires:    status.Expires,

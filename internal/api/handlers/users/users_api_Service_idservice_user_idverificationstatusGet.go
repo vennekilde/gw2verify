@@ -36,7 +36,11 @@ func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.Respon
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	status, link := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
+	status, link, err := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
+	if err != nil {
+		ThrowReqError(w, r, err.Error(), err, http.StatusInternalServerError)
+		return
+	}
 	linkREST := types.ServiceLink{
 		Display_name:    link.ServiceUserDisplayName,
 		Service_id:      link.ServiceID,

@@ -91,47 +91,49 @@ type Configuration struct {
 	LinkedWorlds map[int][]int
 }
 
-func Status(worldPerspective int, serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink) {
+func Status(worldPerspective int, serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink, err error) {
 	return StatusWithAccount(worldPerspective, serviceID, serviceUserID, nil)
 }
-func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink) {
-	var err error
+func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink, err error) {
 	if serviceUserID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
-		return status, link
+		return status, link, nil
 	}
 
 	//Check if user is linked to a gw2 account
 	if err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
-			glog.Error(err)
-			status.Status = ACCESS_DENIED_UNKNOWN
-			return status, link
+			return status, link, err
 		}
 	}
 	if link.AccountID != "" {
 		//Check verification status of linked account
-		acc := gw2api.Account{}
+		var acc gw2api.Account
 		if accData == nil {
-			err = orm.DB().First(&acc, "id = ?", link.AccountID).Error
+			if err = orm.DB().First(acc, "id = ?", link.AccountID).Error; err != nil {
+				if err != gorm.ErrRecordNotFound {
+					status.Status = ACCESS_DENIED_UNKNOWN
+					return status, link, err
+				}
+			}
 		} else {
 			acc = *accData
 		}
-		if err == nil {
+		if acc.ID != "" {
 			status = AccountStatus(acc, worldPerspective)
 			//Return status if access has been granted, or if the user is banned
 			if status.Status.AccessGranted() || status.Status == ACCESS_DENIED_BANNED {
-				return status, link
+				return status, link, nil
 			}
 		}
 	}
 
+	// Check for temporary access
 	tempAccess := TemporaryAccess{}
 	if err = orm.DB().First(&tempAccess, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
 		if err != gorm.ErrRecordNotFound {
-			glog.Error(err)
 			status.Status = ACCESS_DENIED_UNKNOWN
-			return status, link
+			return status, link, err
 		}
 	}
 	if tempAccess.ServiceUserID != "" {
@@ -139,32 +141,31 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 		status.Expires = int64(config.Config().TemporaryAccessExpirationTime - timeSinceGranted)
 		if timeSinceGranted >= config.Config().TemporaryAccessExpirationTime {
 			status.Status = ACCESS_DENIED_EXPIRED
-			return status, link
+			return status, link, nil
 		}
 		if tempAccess.World == worldPerspective {
 			status.Status = ACCESS_GRANTED_HOME_WORLD_TEMPORARY
-			return status, link
+			return status, link, nil
 		}
 		//Get cached world links
 		worldLinks, err := GetWorldLinks(worldPerspective)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
-				glog.Error(err)
 				status.Status = ACCESS_DENIED_UNKNOWN
-				return status, link
+				return status, link, err
 			}
 		}
 		for _, world := range worldLinks {
 			if world == tempAccess.World {
 				status.Status = ACCESS_GRANTED_LINKED_WORLD_TEMPORARY
-				return status, link
+				return status, link, nil
 			}
 		}
 		status.Status = ACCESS_DENIED_INVALID_WORLD
-		return status, link
+		return status, link, nil
 	}
 	status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
-	return status, link
+	return status, link, nil
 }
 
 // AccountStatus checks the verification access status for an account given a world perspective

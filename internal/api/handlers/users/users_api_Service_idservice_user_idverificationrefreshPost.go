@@ -38,7 +38,11 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return
 	}
-	status, _ := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
+	status, _, err := verify.Status(worldPerspective, serviceIDInt, serviceUserID)
+	if err != nil {
+		ThrowReqError(w, r, err.Error(), err, http.StatusInternalServerError)
+		return
+	}
 	var respBody types.VerificationStatus
 	respBody.Status = types.EnumVerificationStatusStatus(status.Status.Name())
 	respBody.Account_id = status.AccountData.ID
