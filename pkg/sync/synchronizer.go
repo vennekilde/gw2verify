@@ -1,13 +1,16 @@
-package verify
+package sync
 
 import (
 	"errors"
 	"strings"
 	"time"
 
+	"github.com/jinzhu/gorm"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/config"
 	"github.com/vennekilde/gw2verify/pkg/history"
+	"github.com/vennekilde/gw2verify/pkg/utils"
+	"github.com/vennekilde/gw2verify/pkg/verify"
 
 	"github.com/golang/glog"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
@@ -37,7 +40,7 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 			continue
 		}
 
-		tokeninfo.APIKey = spaceStringsBuilder(tokeninfo.APIKey)
+		tokeninfo.APIKey = utils.StripWhitespace(tokeninfo.APIKey)
 
 		acc, err = SynchronizeAPIKey(gw2API, tokeninfo.APIKey, tokeninfo.Permissions)
 		if err != nil {
@@ -99,12 +102,12 @@ func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []strin
 	}
 
 	storedAcc := gw2api.Account{}
-	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
+	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
 		return acc, err
 	}
 
 	history.CollectAccount(storedAcc, acc)
-	CheckForVerificationUpdate(storedAcc, acc)
+	verify.CheckForVerificationUpdate(storedAcc, acc)
 
 	acc.Persist()
 
@@ -112,7 +115,7 @@ func SynchronizeAPIKey(gw2API *gw2api.GW2Api, apikey string, permissions []strin
 }
 
 func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUserID string) (err error, userErr error) {
-	link := ServiceLink{}
+	link := verify.ServiceLink{}
 	err = orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error
 	if err != nil {
 		return err, nil

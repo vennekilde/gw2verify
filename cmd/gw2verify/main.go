@@ -9,6 +9,7 @@ import (
 	"github.com/vennekilde/gw2verify/internal/api"
 	"github.com/vennekilde/gw2verify/internal/config"
 	"github.com/vennekilde/gw2verify/pkg/history"
+	"github.com/vennekilde/gw2verify/pkg/sync"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
@@ -37,5 +38,5 @@ func main() {
 
 	gw2api := gw2api.NewGW2Api()
 	go verify.BeginWorldLinksSyncLoop(gw2api)
-	verify.StartAPISynchronizer(gw2api)
+	sync.StartAPISynchronizer(gw2api)
 }

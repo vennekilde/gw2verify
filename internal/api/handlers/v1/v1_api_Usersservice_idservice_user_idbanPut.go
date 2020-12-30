@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -13,9 +13,9 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
-// Service_idservice_user_idbanPut is the handler for PUT /users/{service_id}/{service_user_id}/ban
+// Usersservice_idservice_user_idbanPut is the handler for PUT /v1/users/{service_id}/{service_user_id}/ban
 // Ban a user's gw2 account from being verified
-func (api UsersAPI) Service_idservice_user_idbanPut(w http.ResponseWriter, r *http.Request) {
+func (api V1API) Usersservice_idservice_user_idbanPut(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}

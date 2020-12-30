@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -18,9 +18,9 @@ type VerificationStatusExtended struct {
 	AccountData gw2api.Account
 }
 
-// Service_idservice_user_idverificationstatusGet is the handler for GET /users/{service_id}/{service_user_id}/verification/status
+// Usersservice_idservice_user_idverificationstatusGet is the handler for GET /v1/users/{service_id}/{service_user_id}/verification/status
 // Get a users verification status
-func (api UsersAPI) Service_idservice_user_idverificationstatusGet(w http.ResponseWriter, r *http.Request) { // display_name := req.FormValue("display_name")
+func (api V1API) Usersservice_idservice_user_idverificationstatusGet(w http.ResponseWriter, r *http.Request) { // display_name := req.FormValue("display_name")
 	if apiservice.Permitted(w, r) == false {
 		return
 	}

@@ -20,187 +20,120 @@ traits:
             403:
                 description: Access token invalid
 
-
-/configuration:
-    get:
-        is: [secured, world_oriented]
-        description: Get a configuration containing relevant information for running a service bot
-        responses:
-            200:
-                body:
-                    application/json:
-                        type: Configuration
-/updates:
-    /{service_id}:
-        uriParameters:
-            service_id:
-                type: integer
-                description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
-        /subscribe:
-            get:
-                is: [secured, world_oriented]
-                description: Long polling rest endpoint for receiving verification updates
-                responses:
-                    200:
+/v1:
+    /configuration:
+        get:
+            is: [secured, world_oriented]
+            description: Get a configuration containing relevant information for running a service bot
+            responses:
+                200:
+                    body:
+                        application/json:
+                            type: Configuration
+    /updates:
+        /{service_id}:
+            uriParameters:
+                service_id:
+                    type: integer
+                    description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+            /subscribe:
+                get:
+                    is: [secured, world_oriented]
+                    description: Long polling rest endpoint for receiving verification updates
+                    responses:
+                        200:
+                            body:
+                                application/json:
+                                    type: VerificationStatus
+                        408:
+                            description: Long polling timeout, no events available during request period
+    /channels:
+        /{service_id}:
+            uriParameters:
+                service_id:
+                    type: integer
+                    description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+            /{channel}:
+                /statistics:
+                    post:
+                        is: [secured]
+                        description: Collect statistics based on the provided parameters and save them for historical purposes
                         body:
                             application/json:
-                                type: VerificationStatus
-                    408:
-                        description: Long polling timeout, no events available during request period
-/users:
-    /{service_id}:
-        uriParameters:
-            service_id:
-                type: integer
-                description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
-        /{service_user_id}:
+                                type: ChannelMetadata
+                        responses:
+                            200:
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
+                            500:
+                                body:
+                                    application/json:
+                                        type: Error
+    /users:
+        /{service_id}:
             uriParameters:
-                service_user_id:
-                    type: string
-            /properties:
-                get:
-                    is: [secured]
-                    description: Get all user properties
-                    responses:
-                        200:
-                            body:
-                                application/json:
-                                    type: Property[]
-                        400:
-                            body:
-                                application/json:
-                                    type: Error
-                put:
-                    is: [secured]
-                    description: Set a user property
-                    queryParameters:
-                        name:
-                            type: string
-                            description: Property name
-                        value:
-                            type: string
-                            description: Property value
-                    responses:
-                        200:
-                        400:
-                            body:
-                                application/json:
-                                    type: Error
-                /{property}:
+                service_id:
+                    type: integer
+                    description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+            /{service_user_id}:
+                uriParameters:
+                    service_user_id:
+                        type: string
+                /properties:
                     get:
                         is: [secured]
-                        description: Get a user property
+                        description: Get all user properties
+                        responses:
+                            200:
+                                body:
+                                    application/json:
+                                        type: Property[]
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
+                    put:
+                        is: [secured]
+                        description: Set a user property
                         queryParameters:
                             name:
                                 type: string
                                 description: Property name
-                        responses:
-                            200:
-                                body:
-                                    application/json:
-                                        type: Property
-                            404:
-                                description: User does not have the requested property
-            /ban:
-                put:
-                    is: [secured]
-                    description: Ban a user's gw2 account from being verified
-                    body:
-                        application/json:
-                            type: BanData
-                    responses:
-                        200:
-                        400:
-                            body:
-                                application/json:
-                                    type: Error
-                        500:
-                            body:
-                                application/json:
-                                    type: Error
-            /apikey:
-                put:
-                    is: [secured, world_oriented]
-                    description: Set a service user's API key
-                    queryParameters:
-                        skip-requirements:
-                            type: boolean
-                            description: Skip the variuse apikey requirements that might be in place
-                    body:
-                        application/json:
-                            type: APIKeyData
-                    responses:
-                        200:
-                        400:
-                            body:
-                                application/json:
-                                    type: Error
-                        500:
-                            body:
-                                application/json:
-                                    type: Error
-                /name:
-                    get:
-                        is: [secured, world_oriented]
-                        description: Get a service user's apikey name they are required to use if apikey name restriction is enforced
-                        responses:
-                            200:
-                                body:
-                                    application/json:
-                                        type: APIKeyName
-                            400:
-                                body:
-                                    application/json:
-                                        type: Error
-            /verification:
-                /refresh:
-                    post:
-                        is: [secured, world_oriented]
-                        description: Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
-                        responses:
-                            200:
-                                body:
-                                    application/json:
-                                        type: VerificationStatus
-                            400:
-                                body:
-                                    application/json:
-                                        type: Error
-                            500:
-                                body:
-                                    application/json:
-                                        type: Error
-                /status:
-                    get:
-                        is: [secured, world_oriented]
-                        description: Get a users verification status
-                        queryParameters:
-                            display_name:
-                                required: false
+                            value:
                                 type: string
-                                description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+                                description: Property value
                         responses:
                             200:
-                                body:
-                                    application/json:
-                                        type: VerificationStatus
                             400:
                                 body:
                                     application/json:
                                         type: Error
-                /temporary:
+                    /{property}:
+                        get:
+                            is: [secured]
+                            description: Get a user property
+                            queryParameters:
+                                name:
+                                    type: string
+                                    description: Property name
+                            responses:
+                                200:
+                                    body:
+                                        application/json:
+                                            type: Property
+                                404:
+                                    description: User does not have the requested property
+                /ban:
                     put:
-                        is: [secured, world_oriented]
-                        description: Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
+                        is: [secured]
+                        description: Ban a user's gw2 account from being verified
                         body:
                             application/json:
-                                type: TemporaryData
+                                type: BanData
                         responses:
                             200:
-                                body:
-                                    application/json:
-                                        type: integer
-                                        description: expires after given amount of seconds
                             400:
                                 body:
                                     application/json:
@@ -209,6 +142,97 @@ traits:
                                 body:
                                     application/json:
                                         type: Error
+                /apikey:
+                    put:
+                        is: [secured, world_oriented]
+                        description: Set a service user's API key
+                        queryParameters:
+                            skip-requirements:
+                                type: boolean
+                                description: Skip the variuse apikey requirements that might be in place
+                        body:
+                            application/json:
+                                type: APIKeyData
+                        responses:
+                            200:
+                            400:
+                                body:
+                                    application/json:
+                                        type: Error
+                            500:
+                                body:
+                                    application/json:
+                                        type: Error
+                    /name:
+                        get:
+                            is: [secured, world_oriented]
+                            description: Get a service user's apikey name they are required to use if apikey name restriction is enforced
+                            responses:
+                                200:
+                                    body:
+                                        application/json:
+                                            type: APIKeyName
+                                400:
+                                    body:
+                                        application/json:
+                                            type: Error
+                /verification:
+                    /refresh:
+                        post:
+                            is: [secured, world_oriented]
+                            description: Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
+                            responses:
+                                200:
+                                    body:
+                                        application/json:
+                                            type: VerificationStatus
+                                400:
+                                    body:
+                                        application/json:
+                                            type: Error
+                                500:
+                                    body:
+                                        application/json:
+                                            type: Error
+                    /status:
+                        get:
+                            is: [secured, world_oriented]
+                            description: Get a users verification status
+                            queryParameters:
+                                display_name:
+                                    required: false
+                                    type: string
+                                    description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+                            responses:
+                                200:
+                                    body:
+                                        application/json:
+                                            type: VerificationStatus
+                                400:
+                                    body:
+                                        application/json:
+                                            type: Error
+                    /temporary:
+                        put:
+                            is: [secured, world_oriented]
+                            description: Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
+                            body:
+                                application/json:
+                                    type: TemporaryData
+                            responses:
+                                200:
+                                    body:
+                                        application/json:
+                                            type: integer
+                                            description: expires after given amount of seconds
+                                400:
+                                    body:
+                                        application/json:
+                                            type: Error
+                                500:
+                                    body:
+                                        application/json:
+                                            type: Error
 
 
 types:
@@ -317,3 +341,23 @@ types:
             name:
                 type: string
                 description: The apikey name the user has to name their apikey if apikey name is enforced
+    ChannelMetadata:
+        type: object
+        properties:
+            name:
+                type: string
+            users:
+                type: ChannelUserMetadata[]
+    ChannelUserMetadata:
+        type: object
+        properties:
+            id: 
+                type: string
+            name:
+                type: string
+            muted:
+                type: boolean
+            deafened:
+                type: boolean
+            streaming:
+                type: boolean

@@ -94,7 +94,7 @@ type Configuration struct {
 func Status(worldPerspective int, serviceID int, serviceUserID string) (status VerificationStatusExt, link ServiceLink, err error) {
 	return StatusWithAccount(worldPerspective, serviceID, serviceUserID, nil)
 }
-func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, accData *gw2api.Account) (status VerificationStatusExt, link ServiceLink, err error) {
+func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string, acc *gw2api.Account) (status VerificationStatusExt, link ServiceLink, err error) {
 	if serviceUserID == "" {
 		status.Status = ACCESS_DENIED_ACCOUNT_NOT_LINKED
 		return status, link, nil
@@ -108,19 +108,19 @@ func StatusWithAccount(worldPerspective int, serviceID int, serviceUserID string
 	}
 	if link.AccountID != "" {
 		//Check verification status of linked account
-		var acc gw2api.Account
-		if accData == nil {
-			if err = orm.DB().First(&acc, "id = ?", link.AccountID).Error; err != nil {
+		if acc == nil {
+			acc = &gw2api.Account{}
+		}
+		if acc.ID == "" {
+			if err = orm.DB().First(acc, "id = ?", link.AccountID).Error; err != nil {
 				if err != gorm.ErrRecordNotFound {
 					status.Status = ACCESS_DENIED_UNKNOWN
 					return status, link, err
 				}
 			}
-		} else {
-			acc = *accData
 		}
 		if acc.ID != "" {
-			status = AccountStatus(acc, worldPerspective)
+			status = AccountStatus(*acc, worldPerspective)
 			//Return status if access has been granted, or if the user is banned
 			if status.Status.AccessGranted() || status.Status == ACCESS_DENIED_BANNED {
 				return status, link, nil

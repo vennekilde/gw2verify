@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -10,12 +10,13 @@ import (
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
+	"github.com/vennekilde/gw2verify/pkg/sync"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
-// Service_idservice_user_idverificationrefreshPost is the handler for POST /users/{service_id}/{service_user_id}/verification/refresh
+// Usersservice_idservice_user_idverificationrefreshPost is the handler for POST /v1/users/{service_id}/{service_user_id}/verification/refresh
 // Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
-func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.ResponseWriter, r *http.Request) {
+func (api V1API) Usersservice_idservice_user_idverificationrefreshPost(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}
@@ -33,7 +34,7 @@ func (api UsersAPI) Service_idservice_user_idverificationrefreshPost(w http.Resp
 	}
 
 	gw2a := gw2api.NewGW2Api()
-	err, userErr := verify.SynchronizeLinkedUser(gw2a, serviceIDInt, serviceUserID)
+	err, userErr := sync.SynchronizeLinkedUser(gw2a, serviceIDInt, serviceUserID)
 	if err != nil {
 		ThrowReqError(w, r, err.Error(), userErr, http.StatusInternalServerError)
 		return

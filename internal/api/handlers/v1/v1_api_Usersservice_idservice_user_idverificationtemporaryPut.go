@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -15,9 +15,9 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
-// Service_idservice_user_idverificationtemporaryPut is the handler for PUT /users/{service_id}/{service_user_id}/verification/temporary
-// Grant a user temporary world relation
-func (api UsersAPI) Service_idservice_user_idverificationtemporaryPut(w http.ResponseWriter, r *http.Request) {
+// Usersservice_idservice_user_idverificationtemporaryPut is the handler for PUT /v1/users/{service_id}/{service_user_id}/verification/temporary
+// Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
+func (api V1API) Usersservice_idservice_user_idverificationtemporaryPut(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}

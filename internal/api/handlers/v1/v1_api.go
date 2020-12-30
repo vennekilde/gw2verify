@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 //@TODO fix hardcoded later
 var HARD_CODED_WORLD_PERSPECTIVE = 2007
 
-// UsersAPI is API implementation of /users root endpoint
-type UsersAPI struct {
+// V1API is API implementation of /v1 root endpoint
+type V1API struct {
 }
 
 func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, userErr error, statusCode int) {

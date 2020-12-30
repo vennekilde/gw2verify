@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/golang/glog"
+	"github.com/jinzhu/gorm"
 
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/api/handlers/updates"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/config"
+	"github.com/vennekilde/gw2verify/pkg/utils"
 )
 
 // FreeToPlayWvWRankRestriction restricts the minimum required wvw rank before free to play users can verify
@@ -22,7 +23,7 @@ var FreeToPlayWvWRankRestriction = 0
 // SetAPIKeyByUserService sets an apikey from a user of a specific service
 func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
 	//Stip spaces
-	apikey = spaceStringsBuilder(apikey)
+	apikey = utils.StripWhitespace(apikey)
 
 	if err = gw2API.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
@@ -37,22 +38,36 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
+	// Ensure no one us already linked with this account
+	var storedAcc gw2api.Account
+	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
+		return err, nil
+	}
+
 	//Set additional token permissions
 	if err = gw2API.SetAuthenticationWithoutCheck(apikey, token.Permissions); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
+	// Check if apikey & account pass restrictions
 	if ignoreRestrictions == false {
+		// Ensure no one is already linked with this account
+		var storedLink ServiceLink
+		if err = orm.DB().First(&storedLink, "service_id = ? AND account_id = ? AND is_primary = true", serviceID, acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
+			return err, nil
+		}
+		if storedLink.ServiceUserID != "" && storedLink.ServiceUserID != serviceUserID {
+			return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Already linked with another user with id %s", apikey, serviceUserID, serviceID, storedLink.ServiceUserID), errors.New("Account already linked with another user. Contact an admin if you need to transfer access to your current discord user")
+		}
+
+		// Additional restrictions
 		err = processRestrictions(gw2API, worldPerspective, acc, token, serviceID, serviceUserID)
 		if err != nil {
 			return err, err
 		}
 	}
 
-	storedAcc := gw2api.Account{}
-	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err.Error() != "record not found" {
-		return err, nil
-	}
+	// Check if a notification should be published
 	CheckForVerificationUpdate(storedAcc, acc)
 
 	err = token.Persist(gw2API.Auth, acc.ID)
@@ -66,18 +81,8 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 		return fmt.Errorf("Could not persist account information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
 
-	return nil, SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
-}
-
-func spaceStringsBuilder(str string) string {
-	var b strings.Builder
-	b.Grow(len(str))
-	for _, ch := range str {
-		if !unicode.IsSpace(ch) {
-			b.WriteRune(ch)
-		}
-	}
-	return b.String()
+	userErr = SetOrReplaceServiceLink(serviceID, serviceUserID, primary, acc.ID)
+	return nil, userErr
 }
 
 func processRestrictions(gw2api *gw2api.GW2Api, worldPerspective int, acc gw2api.Account, token gw2api.TokenInfo, serviceID int, serviceUserID string) (err error) {

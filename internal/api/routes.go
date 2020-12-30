@@ -4,14 +4,10 @@ package api
 import (
 	"github.com/gorilla/mux"
 
-	"github.com/vennekilde/gw2verify/internal/api/handlers/configuration"
-	"github.com/vennekilde/gw2verify/internal/api/handlers/updates"
-	"github.com/vennekilde/gw2verify/internal/api/handlers/users"
-)
+    "github.com\vennekilde\gw2verify\internal\api\handlers/v1"
+    )
 
 func initRoutes(r *mux.Router) {
 	
-	ConfigurationInterfaceRoutes(r, configuration.ConfigurationAPI{})
-	UpdatesInterfaceRoutes(r, updates.UpdatesAPI{})
-	UsersInterfaceRoutes(r, users.UsersAPI{})
+	V1InterfaceRoutes(r, v1.V1API{})
 }

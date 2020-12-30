@@ -22,7 +22,8 @@ type History struct {
 type HistoryType string
 
 const (
-	WorldMove HistoryType = "WorldMove"
+	WorldMove  HistoryType = "WorldMove"
+	Registered HistoryType = "Registered"
 )
 
 func Collect() error {

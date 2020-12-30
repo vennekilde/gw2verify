@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package updates
+package v1
 
 import (
 	"encoding/json"
@@ -20,12 +20,9 @@ type VerifictionStatusListener struct {
 
 var ServicePollListeners map[int]VerifictionStatusListener = make(map[int]VerifictionStatusListener)
 
-//@TODO fix hardcoded later
-var HARD_CODED_WORLD_PERSPECTIVE = 2007
-
-// Service_idsubscribeGet is the handler for GET /updates/{service_id}/subscribe
+// Updatesservice_idsubscribeGet is the handler for GET /v1/updates/{service_id}/subscribe
 // Long polling rest endpoint for receiving verification updates
-func (api UpdatesAPI) Service_idsubscribeGet(w http.ResponseWriter, r *http.Request) {
+func (api V1API) Updatesservice_idsubscribeGet(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}

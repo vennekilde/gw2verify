@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package users
+package v1
 
 import (
 	"encoding/json"
@@ -13,9 +13,9 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
-// Service_idservice_user_idapikeyPut is the handler for PUT /users/{service_id}/{service_user_id}/apikey
+// Usersservice_idservice_user_idapikeyPut is the handler for PUT /v1/users/{service_id}/{service_user_id}/apikey
 // Set a service user's API key
-func (api UsersAPI) Service_idservice_user_idapikeyPut(w http.ResponseWriter, r *http.Request) {
+func (api V1API) Usersservice_idservice_user_idapikeyPut(w http.ResponseWriter, r *http.Request) { // skip-requirements := req.FormValue("skip-requirements")var reqBody types.APIKeyData
 	if apiservice.Permitted(w, r) == false {
 		return
 	}

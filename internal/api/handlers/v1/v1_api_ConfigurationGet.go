@@ -1,5 +1,5 @@
 // THIS FILE IS SAFE TO EDIT. It will not be overwritten when rerunning go-raml.
-package configuration
+package v1
 
 import (
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
-// Get is the handler for GET /configuration
+// ConfigurationGet is the handler for GET /v1/configuration
 // Get a configuration containing relevant information for running a service bot
-func (api ConfigurationAPI) Get(w http.ResponseWriter, r *http.Request) {
+func (api V1API) ConfigurationGet(w http.ResponseWriter, r *http.Request) {
 	if apiservice.Permitted(w, r) == false {
 		return
 	}
