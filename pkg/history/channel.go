@@ -24,7 +24,7 @@ type VoiceUserState struct {
 	ChannelID          string
 	Muted              bool
 	Deafened           bool
-	WvWRank            int `json:"wvw_rank"`
+	WvWRank            int `json:"wvw_rank" gorm:"column:wvw_rank"`
 	Age                int
 	VerificationStatus int
 }
