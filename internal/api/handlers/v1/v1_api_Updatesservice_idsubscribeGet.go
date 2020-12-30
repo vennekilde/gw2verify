@@ -10,15 +10,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
+	"github.com/vennekilde/gw2verify/pkg/verify"
 )
-
-type VerifictionStatusListener struct {
-	WorldPerspective int
-	ServiceID        int
-	Listener         chan types.VerificationStatus
-}
-
-var ServicePollListeners map[int]VerifictionStatusListener = make(map[int]VerifictionStatusListener)
 
 // Updatesservice_idsubscribeGet is the handler for GET /v1/updates/{service_id}/subscribe
 // Long polling rest endpoint for receiving verification updates
@@ -39,14 +32,14 @@ func (api V1API) Updatesservice_idsubscribeGet(w http.ResponseWriter, r *http.Re
 	ticker := time.NewTicker(120 * time.Second)
 	defer func() { ticker.Stop() }()
 
-	statusListener := ServicePollListeners[serviceIDInt]
+	statusListener := verify.ServicePollListeners[serviceIDInt]
 	if statusListener.Listener == nil {
-		statusListener = VerifictionStatusListener{
+		statusListener = verify.VerifictionStatusListener{
 			ServiceID:        serviceIDInt,
 			WorldPerspective: HARD_CODED_WORLD_PERSPECTIVE,
 			Listener:         make(chan types.VerificationStatus),
 		}
-		ServicePollListeners[serviceIDInt] = statusListener
+		verify.ServicePollListeners[serviceIDInt] = statusListener
 	}
 
 	select {

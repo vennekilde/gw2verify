@@ -4,10 +4,10 @@ package api
 import (
 	"github.com/gorilla/mux"
 
-    "github.com\vennekilde\gw2verify\internal\api\handlers/v1"
-    )
+	"github.com/vennekilde/gw2verify/internal/api/handlers/v1"
+)
 
 func initRoutes(r *mux.Router) {
-	
+
 	V1InterfaceRoutes(r, v1.V1API{})
 }

@@ -11,7 +11,6 @@ import (
 
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
-	"github.com/vennekilde/gw2verify/internal/api/handlers/updates"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/config"
 	"github.com/vennekilde/gw2verify/pkg/utils"
@@ -19,6 +18,14 @@ import (
 
 // FreeToPlayWvWRankRestriction restricts the minimum required wvw rank before free to play users can verify
 var FreeToPlayWvWRankRestriction = 0
+
+type VerifictionStatusListener struct {
+	WorldPerspective int
+	ServiceID        int
+	Listener         chan types.VerificationStatus
+}
+
+var ServicePollListeners map[int]VerifictionStatusListener = make(map[int]VerifictionStatusListener)
 
 // SetAPIKeyByUserService sets an apikey from a user of a specific service
 func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
@@ -190,7 +197,7 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 	}
 
 	for _, link := range links {
-		serviceListener := updates.ServicePollListeners[link.ServiceID]
+		serviceListener := ServicePollListeners[link.ServiceID]
 		if serviceListener.Listener != nil {
 			acc.DbUpdated = time.Now().UTC()
 			status, _, err := StatusWithAccount(serviceListener.WorldPerspective, link.ServiceID, link.ServiceUserID, &acc)

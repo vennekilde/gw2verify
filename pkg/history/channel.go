@@ -33,7 +33,7 @@ func CollectChannelStatistics(serviceID int, channelID string, worldPerspective 
 	ts := time.Now()
 	for _, userMetadata := range data.Users {
 		var acc gw2api.Account
-		status, _, _ := verify.StatusWithAccount(worldPerspective, serviceID, userMetadata.ID, &acc)
+		status, _, _ := verify.StatusWithAccount(worldPerspective, serviceID, userMetadata.Id, &acc)
 
 		userState := VoiceUserState{
 			Timestamp:          ts,
