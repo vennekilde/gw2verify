@@ -19,10 +19,12 @@ type ChannelStatistics struct {
 }
 type VoiceUserState struct {
 	Timestamp          time.Time
+	ServiceID          int
+	ServiceUserID      string
 	ChannelID          string
 	Muted              bool
 	Deafened           bool
-	WvWRank            int
+	WvWRank            int `json:"wvw_rank"`
 	Age                int
 	VerificationStatus int
 }
@@ -37,6 +39,8 @@ func CollectChannelStatistics(serviceID int, channelID string, worldPerspective 
 
 		userState := VoiceUserState{
 			Timestamp:          ts,
+			ServiceID:          serviceID,
+			ServiceUserID:      userMetadata.Id,
 			ChannelID:          channelID,
 			Muted:              userMetadata.Muted,
 			Deafened:           userMetadata.Deafened,
