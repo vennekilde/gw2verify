@@ -115,20 +115,20 @@ func processAPIKeyRestrictions(worldPerspective int, acc gw2api.Account, token g
 		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", GetAPIKeyName(worldPerspective, serviceID, serviceUserID), token.Name)
 	}
 
-	freeToPlay := IsFreeToPlay(acc)
+	//freeToPlay := IsFreeToPlay(acc)
 
 	//FreeToPlay restrictions
-	if freeToPlay {
-		//Ensure progression permission is present
-		hasProgression := Contains(token.Permissions, "progression")
+	//if freeToPlay {
+	//Ensure progression permission is present
+	hasProgression := Contains(token.Permissions, "progression")
 
-		//Ensure characters permission is present
-		hasCharacters := Contains(token.Permissions, "characters")
+	//Ensure characters permission is present
+	hasCharacters := Contains(token.Permissions, "characters")
 
-		if !hasProgression || !hasCharacters {
-			return errors.New("Missing apikey permission \"characters\" and or \"progression\".\nYou are trying to verify a FreeToPlay account and is therefore required to have a level 80 character")
-		}
+	if !hasProgression || !hasCharacters {
+		return errors.New("missing apikey permission \"characters\" and or \"progression\"")
 	}
+	//}
 
 	return err
 }
