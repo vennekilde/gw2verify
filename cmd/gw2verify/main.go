@@ -11,7 +11,15 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/history"
 	"github.com/vennekilde/gw2verify/pkg/sync"
 	"github.com/vennekilde/gw2verify/pkg/verify"
+	"go.uber.org/zap"
 )
+
+func init() {
+	logger, _ := zap.NewDevelopment()
+	defer logger.Sync()
+	_ = zap.ReplaceGlobals(logger)
+	zap.L().Info("replaced zap's global loggers")
+}
 
 func main() {
 	flag.Set("stderrthreshold", "INFO")
