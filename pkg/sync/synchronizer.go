@@ -48,7 +48,7 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 			goto SyncError
 		} else {
 			if config.Config().Debug {
-				zap.L().Info("updated account", zap.string("account name", acc.Name))
+				zap.L().Info("updated account", zap.String("account name", acc.Name))
 			}
 			successCount++
 			if time.Since(successTimestamp).Minutes() >= 10 {
