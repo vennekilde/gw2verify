@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/tkanos/gonfig"
 	"go.uber.org/zap"
 )
