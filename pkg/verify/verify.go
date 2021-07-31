@@ -126,7 +126,7 @@ func processAPIKeyRestrictions(worldPerspective int, acc gw2api.Account, token g
 	hasCharacters := Contains(token.Permissions, "characters")
 
 	if !hasProgression || !hasCharacters {
-		return errors.New("missing apikey permission \"characters\" and or \"progression\"")
+		return errors.New("missing apikey permission \"characters\" and/or \"progression\"")
 	}
 	//}
 

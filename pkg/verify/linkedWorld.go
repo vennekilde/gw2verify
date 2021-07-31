@@ -4,15 +4,15 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
+	"go.uber.org/zap"
 )
 
 type worldSyncError error
 
 // Errors raised.
 var (
-	ErrWorldsNotSynced worldSyncError = errors.New("Worlds are not synched")
+	ErrWorldsNotSynced worldSyncError = errors.New("worlds are not synched")
 )
 
 var lastEndTime time.Time
@@ -23,12 +23,14 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
 	for {
 		if !lastEndTime.IsZero() {
 			// Sleep until next match
-			time.Sleep(time.Until(lastEndTime))
+			sleepUntil := time.Until(lastEndTime)
+			zap.L().Info("synchronizing linked worlds once matchup is over", zap.Duration("duration left", sleepUntil), zap.Time("endtime", lastEndTime))
+			time.Sleep(sleepUntil)
 		}
 
-		glog.Info("Synchronizing linked worlds")
+		zap.L().Info("synchronizing linked worlds")
 		if err := SynchronizeWorldLinks(gw2API); err != nil {
-			glog.Error(err)
+			zap.L().Error("unable to synchronize matchup", zap.Error(err))
 		}
 		time.Sleep(time.Minute * 5)
 	}
@@ -50,6 +52,7 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		setWorldLinks(match.AllWorlds.Green)
 		lastEndTime = match.EndTime
 		isWorldLinksSynced = true
+		zap.L().Info("matchup fetched", zap.Any("matchup", match))
 	}
 	return nil
 }

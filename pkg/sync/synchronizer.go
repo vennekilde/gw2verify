@@ -26,16 +26,17 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 	var successTimestamp = time.Now()
 	for {
 		if attemptsSinceLastSuccess >= 10 {
+			glog.Warning("10 consecutive failures, sleeping for 10 seconds")
 			time.Sleep(10 * time.Second)
 		}
 		tokeninfo, err := gw2apidb.FindLastUpdatedAPIKey(config.Config().ExpirationTime)
 		if err != nil {
-			glog.Errorf("Could not retrieve APIKey from storage. Error: %#v", err)
+			glog.Errorf("could not retrieve APIKey from storage. Error: %#v", err)
 			attemptsSinceLastSuccess++
 			continue
 		}
 		if tokeninfo.APIKey == "" {
-			glog.Errorf("Retrieved APIKey from storage is empty. Data: %#v", tokeninfo)
+			glog.Errorf("retrieved APIKey from storage is empty. Data: %#v", tokeninfo)
 			attemptsSinceLastSuccess++
 			continue
 		}
@@ -47,7 +48,7 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 			goto SyncError
 		} else {
 			if config.Config().Debug {
-				glog.Infof("Updated account: %s", acc.Name)
+				glog.Infof("updated account: %s", acc.Name)
 			}
 			successCount++
 			if time.Since(successTimestamp).Minutes() >= 10 {
@@ -77,12 +78,12 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 
 	SyncError:
 		if acc.Name != "" {
-			glog.Errorf("Could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, acc.Name, err)
+			glog.Errorf("could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, acc.Name, err)
 		} else {
 			// Show error if in debug mode, or if error is not just an error, stating it is an invalid key
 			showErr := !strings.Contains(err.Error(), "invalid key") || config.Config().Debug
 			if showErr {
-				glog.Errorf("Could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
+				glog.Errorf("could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
 			}
 		}
 		tokeninfo.UpdateLastAttemptedUpdate()
@@ -121,7 +122,7 @@ func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUs
 		return err, nil
 	}
 	if link.AccountID == "" {
-		err = errors.New("No service link found with that user id and service id")
+		err = errors.New("no service link found with that user id and service id")
 		return err, err
 	}
 
@@ -131,7 +132,7 @@ func SynchronizeLinkedUser(gw2apiclient *gw2api.GW2Api, serviceID int, serviceUs
 		return err, nil
 	}
 	if tokeninfo.AccountID != link.AccountID {
-		err = errors.New("No apikey associated with found service link")
+		err = errors.New("no apikey associated with found service link")
 		return err, err
 	}
 

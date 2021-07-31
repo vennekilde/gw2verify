@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
+	"go.uber.org/zap"
 )
 
 type History struct {
@@ -34,7 +34,7 @@ func Collect() error {
 		return err
 	}
 
-	glog.Info(len(tokens))
+	zap.L().Info(len(tokens))
 
 	return nil
 }
