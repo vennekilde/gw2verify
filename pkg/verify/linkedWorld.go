@@ -50,7 +50,9 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		setWorldLinks(match.AllWorlds.Red)
 		setWorldLinks(match.AllWorlds.Blue)
 		setWorldLinks(match.AllWorlds.Green)
-		lastEndTime = match.EndTime
+		if lastEndTime.After(match.EndTime) {
+			lastEndTime = match.EndTime
+		}
 		isWorldLinksSynced = true
 		zap.L().Info("matchup fetched", zap.Any("matchup", match))
 	}
@@ -75,6 +77,25 @@ func setWorldLinks(allWorlds []int) {
 		}
 		linkedWorlds[worldRefID] = links
 	}
+}
+
+func matchHasWorld(match gw2api.Match, worldID int) bool {
+	for _, world := range match.AllWorlds.Red {
+		if world == worldID {
+			return true
+		}
+	}
+	for _, world := range match.AllWorlds.Blue {
+		if world == worldID {
+			return true
+		}
+	}
+	for _, world := range match.AllWorlds.Green {
+		if world == worldID {
+			return true
+		}
+	}
+	return false
 }
 
 func IsWorldLinksSynchronized() bool {

@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/golang/glog"
+	"time"
+
 	"github.com/tkanos/gonfig"
 	"go.uber.org/zap"
 )
