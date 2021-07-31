@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/vennekilde/gw2verify/internal/config"
-	"github.com/golang/glog"
+	"go.uber.org/zap"
 )
 
 type AuthToken struct {
@@ -23,7 +23,10 @@ func Permitted(w http.ResponseWriter, r *http.Request) bool {
 		//}
 	}
 
-	glog.Warningf("Could not verify token on request {URI: %s, RemoteAddr: %s} token: %s", r.RequestURI, r.RemoteAddr, token) 
+	zap.L().Warn("unable to verify token from request",
+		zap.String("request uri", r.RequestURI),
+		zap.String("remote addr", r.RemoteAddr),
+		zap.String("token", token))
 	w.WriteHeader(http.StatusForbidden)
 	return false
 }

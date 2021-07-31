@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/vennekilde/gw2verify/internal/api/types"
 	"github.com/vennekilde/gw2verify/internal/apiservice"
 	"github.com/vennekilde/gw2verify/internal/config"
 	"github.com/vennekilde/gw2verify/pkg/verify"
+	"go.uber.org/zap"
 )
 
 // Usersservice_idservice_user_idverificationtemporaryPut is the handler for PUT /v1/users/{service_id}/{service_user_id}/verification/temporary
@@ -42,7 +42,7 @@ func (api V1API) Usersservice_idservice_user_idverificationtemporaryPut(w http.R
 			// Grant Linked World temporary access
 			worldLinks, err := verify.GetWorldLinks(worldPerspective)
 			if err != nil {
-				glog.Error(err)
+				zap.L().Error("unable to get world links", zap.Error(err))
 				w.WriteHeader(400)
 			}
 			if len(worldLinks) > 0 {

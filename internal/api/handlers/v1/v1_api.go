@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/golang/glog"
+	"go.uber.org/zap"
 )
 
 //@TODO fix hardcoded later
@@ -21,7 +21,10 @@ func ThrowReqError(w http.ResponseWriter, r *http.Request, errorMsg string, user
 	if userErr != nil {
 		jsonErr["safe-display-error"] = userErr.Error()
 	}
-	glog.Warningf("Request {URI: %s, RemoteAddr: %s} caused error msg: %s", r.RequestURI, r.RemoteAddr, errorMsg)
+	zap.L().Warn("error while processing request",
+		zap.String("request uri", r.RequestURI),
+		zap.String("remote addr", r.RemoteAddr),
+		zap.String("error", errorMsg))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(&jsonErr)

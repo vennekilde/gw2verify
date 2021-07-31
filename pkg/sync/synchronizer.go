@@ -2,6 +2,7 @@ package sync
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,8 +12,8 @@ import (
 	"github.com/vennekilde/gw2verify/pkg/history"
 	"github.com/vennekilde/gw2verify/pkg/utils"
 	"github.com/vennekilde/gw2verify/pkg/verify"
+	"go.uber.org/zap"
 
-	"github.com/golang/glog"
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2apidb/pkg/gw2apidb"
 )
@@ -26,17 +27,17 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 	var successTimestamp = time.Now()
 	for {
 		if attemptsSinceLastSuccess >= 10 {
-			glog.Warning("10 consecutive failures, sleeping for 10 seconds")
+			zap.L().Warn("10 consecutive failures, sleeping for 10 seconds")
 			time.Sleep(10 * time.Second)
 		}
 		tokeninfo, err := gw2apidb.FindLastUpdatedAPIKey(config.Config().ExpirationTime)
 		if err != nil {
-			glog.Errorf("could not retrieve APIKey from storage. Error: %#v", err)
+			zap.L().Error("could not retrieve APIKey from storage", zap.Error(err))
 			attemptsSinceLastSuccess++
 			continue
 		}
 		if tokeninfo.APIKey == "" {
-			glog.Errorf("retrieved APIKey from storage is empty. Data: %#v", tokeninfo)
+			zap.L().Error("retrieved APIKey from storage is empty", zap.Any("tokeninfo", tokeninfo))
 			attemptsSinceLastSuccess++
 			continue
 		}
@@ -48,11 +49,11 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 			goto SyncError
 		} else {
 			if config.Config().Debug {
-				glog.Infof("updated account: %s", acc.Name)
+				zap.L().Info("updated account", zap.string("account name", acc.Name))
 			}
 			successCount++
 			if time.Since(successTimestamp).Minutes() >= 10 {
-				glog.Infof("%d successful refreshes last 10 minutes", successCount)
+				zap.L().Info("successful refreshes last 10 minutes", zap.Int("count", successCount))
 				successTimestamp = time.Now()
 				successCount = 0
 			}
@@ -78,12 +79,17 @@ func StartAPISynchronizer(gw2API *gw2api.GW2Api) {
 
 	SyncError:
 		if acc.Name != "" {
-			glog.Errorf("could not synchronize apikey '%s' for account '%s'. Error: %s", tokeninfo.APIKey, acc.Name, err)
+			zap.L().Error("could not synchronize apikey",
+				zap.String("apikey", tokeninfo.APIKey),
+				zap.String("account name", acc.Name),
+				zap.Error(err))
 		} else {
 			// Show error if in debug mode, or if error is not just an error, stating it is an invalid key
 			showErr := !strings.Contains(err.Error(), "invalid key") || config.Config().Debug
 			if showErr {
-				glog.Errorf("could not synchronize apikey '%s'. Error: %s", tokeninfo.APIKey, err)
+				zap.L().Error("could not synchronize apikey",
+					zap.String("apikey", tokeninfo.APIKey),
+					zap.Error(err))
 			}
 		}
 		tokeninfo.UpdateLastAttemptedUpdate()

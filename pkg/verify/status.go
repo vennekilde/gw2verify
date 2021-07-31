@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
 	"github.com/vennekilde/gw2verify/internal/config"
+	"go.uber.org/zap"
 
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 )
@@ -214,7 +214,7 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	worldLinks, err := GetWorldLinks(worldPerspective)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
-			glog.Error(err)
+			zap.L().Error("could not get linked worlds", zap.Error(err))
 			status.Status = ACCESS_DENIED_UNKNOWN
 			return status
 		}

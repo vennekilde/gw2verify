@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/golang/glog"
 	"github.com/tkanos/gonfig"
+	"go.uber.org/zap"
 )
 
 type Configration struct {
@@ -17,10 +18,10 @@ var loaded = false
 var config = Configration{}
 
 func Config() Configration {
-	if loaded == false {
+	if !loaded {
 		err := gonfig.GetConf("", &config)
 		if err != nil {
-			glog.Fatalf("Could not load config. Error: %s", err.Error())
+			zap.L().Fatal("could not load config", zap.Error(err))
 		}
 	}
 	return config

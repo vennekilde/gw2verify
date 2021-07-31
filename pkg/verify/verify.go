@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
+	"go.uber.org/zap"
 
 	"github.com/vennekilde/gw2apidb/pkg/gw2api"
 	"github.com/vennekilde/gw2apidb/pkg/orm"
@@ -81,7 +81,7 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 	if err != nil {
 		return fmt.Errorf("Could not persist tokeninfo information: APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), nil
 	}
-	glog.Infof("Stored APIKey '%s' with account id: %s", apikey, acc.ID)
+	zap.L().Info("stored APIKey", zap.String("APIKey", apikey), zap.String("Account ID", acc.ID))
 
 	err = acc.Persist()
 	if err != nil {
@@ -202,7 +202,7 @@ func OnVerificationUpdate(acc gw2api.Account) (err error) {
 			acc.DbUpdated = time.Now().UTC()
 			status, _, err := StatusWithAccount(serviceListener.WorldPerspective, link.ServiceID, link.ServiceUserID, &acc)
 			if err != nil {
-				glog.Error(err)
+				zap.L().Error("unable to get account verification status", zap.Error(err))
 				continue
 			}
 			verificationStatus := types.VerificationStatus{
@@ -233,7 +233,11 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 			return qResult.Error
 		}
 		if qResult.RowsAffected > 0 {
-			glog.Infof("Removed %d rows while replacing service link {serviceID: %d, serviceUserID: %s, accountID: %s, primary: true}", qResult.RowsAffected, serviceID, serviceUserID, accountID)
+			zap.L().Info("removed rows while replacing service link",
+				zap.Int64("affected rows", qResult.RowsAffected),
+				zap.Int("serviceID", serviceID),
+				zap.String("serviceUserID", serviceUserID),
+				zap.String("accountID", accountID))
 		}
 	}
 	link.ServiceUserID = serviceUserID
@@ -242,9 +246,9 @@ func SetOrReplaceServiceLink(serviceID int, serviceUserID string, primary bool, 
 	link.IsPrimary = primary
 	//link.ServiceUserDisplayName = ""
 	if err := orm.DB().Omit("db_created").Save(&link).Error; err != nil {
-		return fmt.Errorf("Could not persist service link: User %s on service %d. Error: %#v", serviceUserID, serviceID, err)
+		return fmt.Errorf("could not persist service link: User %s on service %d. Error: %#v", serviceUserID, serviceID, err)
 	}
-	glog.Infof("Stored service link {ServiceID: %d, ServiceUserID: %s, AccountID: %s}", link.ServiceID, link.ServiceUserID, link.ServiceUserID)
+	zap.L().Info("stored service link", zap.Any("link", link))
 	return err
 }
 
