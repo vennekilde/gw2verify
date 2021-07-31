@@ -34,7 +34,7 @@ func Collect() error {
 		return err
 	}
 
-	zap.L().Info(len(tokens))
+	zap.L().Info("tokens with progression permission", zap.Int("count", len(tokens)))
 
 	return nil
 }
