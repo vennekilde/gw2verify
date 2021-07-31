@@ -24,7 +24,9 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
 		if !lastEndTime.IsZero() {
 			// Sleep until next match
 			sleepUntil := time.Until(lastEndTime)
-			zap.L().Info("synchronizing linked worlds once matchup is over", zap.Duration("duration left", sleepUntil), zap.Time("endtime", lastEndTime))
+			zap.L().Info("synchronizing linked worlds once matchup is over",
+				zap.Duration("duration left", sleepUntil),
+				zap.Time("endtime", lastEndTime))
 			time.Sleep(sleepUntil)
 		}
 
@@ -50,7 +52,7 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		setWorldLinks(match.AllWorlds.Red)
 		setWorldLinks(match.AllWorlds.Blue)
 		setWorldLinks(match.AllWorlds.Green)
-		if lastEndTime.After(match.EndTime) {
+		if lastEndTime.IsZero() || lastEndTime.After(match.EndTime) {
 			lastEndTime = match.EndTime
 		}
 		isWorldLinksSynced = true
