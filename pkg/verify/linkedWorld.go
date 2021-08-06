@@ -33,6 +33,8 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
 				zap.Duration("duration left", sleepUntil),
 				zap.Time("endtime", lastEndTime))
 			time.Sleep(sleepUntil)
+			// SAFETY MEASURE!
+			time.Sleep(time.Minute * 1)
 		} else {
 			zap.L().Info("synchronizing linked worlds in 5 minutes")
 			time.Sleep(time.Minute * 5)
