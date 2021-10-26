@@ -11,3 +11,5 @@ CREATE TABLE "public"."voice_user_states" (
     "age" int default 0 NOT NULL,
     "verification_status" int NOT NULL
 ) WITH (oids = false);
+
+CREATE INDEX "voice_user_states_channel_id" ON "voice_user_states" ("channel_id");

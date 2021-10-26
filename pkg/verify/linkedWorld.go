@@ -10,13 +10,15 @@ import (
 
 type worldSyncError error
 
+type LinkedWorlds map[int][]int
+
 // Errors raised.
 var (
 	ErrWorldsNotSynced worldSyncError = errors.New("worlds are not synched")
 )
 
 var lastEndTime time.Time
-var linkedWorlds map[int][]int
+var linkedWorlds LinkedWorlds
 var isWorldLinksSynced = false
 
 func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
@@ -51,29 +53,36 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 	if err != nil {
 		return err
 	}
-	resetWorldLinks()
-	for _, match := range matches {
-		setWorldLinks(match.AllWorlds.Red)
-		setWorldLinks(match.AllWorlds.Blue)
-		setWorldLinks(match.AllWorlds.Green)
-		if lastEndTime.IsZero() || lastEndTime.After(match.EndTime) {
-			lastEndTime = match.EndTime
+
+	// Sanity check before we go and reset world links before we actually have a new matchup
+	if len(matches) > 0 {
+		lw := createEmptyLinkedWorldsMap()
+		// reset timer to avoid it not being changed by the loop
+		lastEndTime = time.Time{}
+		for _, match := range matches {
+			lw.setWorldLinks(match.AllWorlds.Red)
+			lw.setWorldLinks(match.AllWorlds.Blue)
+			lw.setWorldLinks(match.AllWorlds.Green)
+			if lastEndTime.IsZero() || lastEndTime.After(match.EndTime) {
+				lastEndTime = match.EndTime
+			}
+			isWorldLinksSynced = true
+			zap.L().Info("matchup fetched", zap.Any("matchup", match))
 		}
-		isWorldLinksSynced = true
-		zap.L().Info("matchup fetched", zap.Any("matchup", match))
+		linkedWorlds = lw
 	}
 	return nil
 }
 
-func resetWorldLinks() {
-	isWorldLinksSynced = false
-	linkedWorlds = make(map[int][]int)
+func createEmptyLinkedWorldsMap() LinkedWorlds {
+	newLinkedWorlds := make(LinkedWorlds)
 	for worldID := range WorldNames {
-		linkedWorlds[worldID] = []int{}
+		newLinkedWorlds[worldID] = []int{}
 	}
+	return newLinkedWorlds
 }
 
-func setWorldLinks(allWorlds []int) {
+func (lw LinkedWorlds) setWorldLinks(allWorlds []int) {
 	for _, worldRefID := range allWorlds {
 		links := []int{}
 		for _, worldID := range allWorlds {
@@ -81,7 +90,7 @@ func setWorldLinks(allWorlds []int) {
 				links = append(links, worldID)
 			}
 		}
-		linkedWorlds[worldRefID] = links
+		lw[worldRefID] = links
 	}
 }
 
@@ -114,6 +123,6 @@ func GetWorldLinks(worldPerspective int) (links []int, err error) {
 	}
 	return linkedWorlds[worldPerspective], err
 }
-func GetAllWorldLinks() map[int][]int {
+func GetAllWorldLinks() LinkedWorlds {
 	return linkedWorlds
 }
