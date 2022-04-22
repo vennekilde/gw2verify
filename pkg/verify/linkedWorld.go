@@ -76,7 +76,15 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 				zap.Any("blues", match.AllWorlds.Blue),
 				zap.Any("greens", match.AllWorlds.Green))
 		}
-		linkedWorlds = lw
+		// Only update if we can find all worlds
+		if len(lw) >= len(WorldNames) {
+			linkedWorlds = lw
+		} else {
+			zap.L().Warn("not updating linked worlds, did not find all worlds in matchups",
+				zap.Int("total worlds", len(WorldNames)),
+				zap.Int("found worlds", len(lw)),
+			)
+		}
 	}
 	return nil
 }
