@@ -52,5 +52,10 @@ func (api V1API) Usersservice_idservice_user_idverificationrefreshPost(w http.Re
 		respBody.Ban_reason = status.Description
 	}
 
+	serviceListener := verify.ServicePollListeners[serviceIDInt]
+	if serviceListener.Listener != nil {
+		serviceListener.Listener <- respBody
+	}
+
 	json.NewEncoder(w).Encode(&respBody)
 }
