@@ -52,6 +52,11 @@ func (api V1API) Usersservice_idservice_user_idverificationrefreshPost(w http.Re
 		respBody.Ban_reason = status.Description
 	}
 
+	respBody.Service_links = []types.ServiceLink{{
+		Service_id:      serviceIDInt,
+		Service_user_id: serviceUserID,
+	}}
+
 	serviceListener := verify.ServicePollListeners[serviceIDInt]
 	if serviceListener.Listener != nil {
 		serviceListener.Listener <- respBody
