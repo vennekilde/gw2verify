@@ -26,6 +26,7 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
 		zap.L().Info("synchronizing linked worlds")
 		if err := SynchronizeWorldLinks(gw2API); err != nil {
 			zap.L().Error("unable to synchronize matchup", zap.Error(err))
+			return
 		}
 
 		if !lastEndTime.IsZero() {
