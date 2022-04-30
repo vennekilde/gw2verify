@@ -73,7 +73,6 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 			if lastEndTime.IsZero() || lastEndTime.After(match.EndTime) {
 				lastEndTime = match.EndTime
 			}
-			isWorldLinksSynced = true
 			zap.L().Info("matchup fetched",
 				zap.Any("id", match.ID),
 				zap.Any("endtime", match.EndTime),
@@ -84,6 +83,7 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		// Only update if we can find all worlds
 		if foundWorlds >= len(WorldNames) {
 			linkedWorlds = lw
+			isWorldLinksSynced = true
 			zap.L().Info("Updated linked worlds", zap.Any("linked worlds", linkedWorlds))
 		} else {
 			zap.L().Warn("not updating linked worlds, did not find all worlds in matchups",
