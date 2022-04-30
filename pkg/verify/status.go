@@ -213,11 +213,9 @@ func AccountStatus(acc gw2api.Account, worldPerspective int) (status Verificatio
 	//Get cached world links
 	worldLinks, err := GetWorldLinks(worldPerspective)
 	if err != nil {
-		if err != gorm.ErrRecordNotFound {
-			zap.L().Error("could not get linked worlds", zap.Error(err))
-			status.Status = ACCESS_DENIED_UNKNOWN
-			return status
-		}
+		zap.L().Error("could not get linked worlds", zap.Error(err))
+		status.Status = ACCESS_DENIED_UNKNOWN
+		return status
 	}
 	for _, world := range worldLinks {
 		if world == acc.World {
