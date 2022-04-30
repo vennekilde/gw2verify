@@ -61,10 +61,14 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		lw := createEmptyLinkedWorldsMap()
 		// reset timer to avoid it not being changed by the loop
 		lastEndTime = time.Time{}
+		foundWorlds := 0
 		for _, match := range matches {
 			lw.setWorldLinks(match.AllWorlds.Red)
 			lw.setWorldLinks(match.AllWorlds.Blue)
 			lw.setWorldLinks(match.AllWorlds.Green)
+			foundWorlds += len(match.AllWorlds.Red) +
+				len(match.AllWorlds.Blue) +
+				len(match.AllWorlds.Green)
 			if lastEndTime.IsZero() || lastEndTime.After(match.EndTime) {
 				lastEndTime = match.EndTime
 			}
@@ -77,8 +81,9 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 				zap.Any("greens", match.AllWorlds.Green))
 		}
 		// Only update if we can find all worlds
-		if len(lw) >= len(WorldNames) {
+		if foundWorlds >= len(WorldNames) {
 			linkedWorlds = lw
+			zap.L().Info("Updated linked worlds", zap.Any("linked worlds", linkedWorlds))
 		} else {
 			zap.L().Warn("not updating linked worlds, did not find all worlds in matchups",
 				zap.Int("total worlds", len(WorldNames)),
