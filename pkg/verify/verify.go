@@ -45,12 +45,6 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
 	}
 
-	// Ensure no one us already linked with this account
-	var storedAcc gw2api.Account
-	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
-		return err, nil
-	}
-
 	//Set additional token permissions
 	if err = gw2API.SetAuthenticationWithoutCheck(apikey, token.Permissions); err != nil {
 		return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Error: %#v", apikey, serviceUserID, serviceID, err), err
@@ -58,20 +52,26 @@ func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, service
 
 	// Check if apikey & account pass restrictions
 	if ignoreRestrictions == false {
+		// @DISABLED
 		// Ensure no one is already linked with this account
-		var storedLink ServiceLink
-		if err = orm.DB().First(&storedLink, "service_id = ? AND account_id = ? AND is_primary = true", serviceID, acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
-			return err, nil
-		}
-		if storedLink.ServiceUserID != "" && storedLink.ServiceUserID != serviceUserID {
-			return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Already linked with another user with id %s", apikey, serviceUserID, serviceID, storedLink.ServiceUserID), errors.New("Account already linked with another user. Contact an admin if you need to transfer access to your current discord user")
-		}
+		//var storedLink ServiceLink
+		//if err = orm.DB().First(&storedLink, "service_id = ? AND account_id = ? AND is_primary = true", serviceID, acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
+		//	return err, nil
+		//}
+		//if storedLink.ServiceUserID != "" && storedLink.ServiceUserID != serviceUserID {
+		//	return fmt.Errorf("Could not set APIKey '%s' for user %s on service %d. Already linked with another user with id %s", apikey, serviceUserID, serviceID, storedLink.ServiceUserID), errors.New("Account already linked with another user. Contact an admin if you need to transfer access to your current discord user")
+		//}
 
 		// Additional restrictions
 		err = processRestrictions(gw2API, worldPerspective, acc, token, serviceID, serviceUserID)
 		if err != nil {
 			return err, err
 		}
+	}
+
+	var storedAcc gw2api.Account
+	if err = orm.DB().First(&storedAcc, "id = ?", acc.ID).Error; err != nil && err != gorm.ErrRecordNotFound {
+		return err, nil
 	}
 
 	// Check if a notification should be published
