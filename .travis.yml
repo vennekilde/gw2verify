@@ -1,18 +1,19 @@
 language: go
 go:
-  - 1.15.x
+  - 1.19.x
 services:
-- docker
+  - docker
 env:
   global:
       - COMMIT=${TRAVIS_COMMIT::8}
 before_install:
   - sudo apt update && sudo apt install libgnutls-openssl27 libgnutls30
-after_success:
+script:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - export REPO=$DOCKER_USERNAME/gw2verify
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - docker build -t $REPO:$COMMIT -f Dockerfile .
+  - export IMAGE_NAME="${REPO}:${COMMIT}"
+  - make package
   - docker images
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
