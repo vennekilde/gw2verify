@@ -17,6 +17,5 @@ script:
   - docker images
   - docker tag $REPO:$COMMIT $REPO:$TAG
   - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-  - docker push $REPO
   - docker push $REPO:$TAG
   - docker push $REPO:travis-$TRAVIS_BUILD_NUMBER
