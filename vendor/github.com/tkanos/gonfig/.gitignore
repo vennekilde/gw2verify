@@ -23,11 +23,5 @@ _testmain.go
 *.test
 *.prof
 
-#
-\.vscode/launch\.json
-
-cmd/gw2verify/debug
-
-build/
-
-bin/
+#Visual Studio code conf file
+.vscode

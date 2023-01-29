@@ -29,7 +29,7 @@ var ServicePollListeners map[int]VerifictionStatusListener = make(map[int]Verifi
 
 // SetAPIKeyByUserService sets an apikey from a user of a specific service
 func SetAPIKeyByUserService(gw2API *gw2api.GW2Api, worldPerspective int, serviceID int, serviceUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
-	//Stip spaces
+	//Strip spaces
 	apikey = utils.StripWhitespace(apikey)
 
 	if err = gw2API.SetAuthenticationWithoutCheck(apikey, []string{"account"}); err != nil {

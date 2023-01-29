@@ -21,13 +21,3 @@ _testmain.go
 
 *.exe
 *.test
-*.prof
-
-#
-\.vscode/launch\.json
-
-cmd/gw2verify/debug
-
-build/
-
-bin/
