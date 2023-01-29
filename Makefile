@@ -1,3 +1,5 @@
+IMAGE_NAME ?= vennekilde/gw2verify:latest
+
 .build(%): export CGO_ENABLED=0
 .build(%):
 	go build -installsuffix 'static' -o ./bin/$(BIN_NAME) ./cmd/gw2verify
@@ -17,4 +19,4 @@ build_linux: .build(linux)
 package: build_linux image-build
 
 image-build:
-	docker build . -t vennekilde/gw2verify:latest
+	docker build . -t ${IMAGE_NAME}
