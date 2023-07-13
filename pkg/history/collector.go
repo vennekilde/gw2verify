@@ -1,22 +1,23 @@
 package history
 
 import (
+	"context"
 	"database/sql"
 	"strconv"
 	"time"
 
-	"github.com/vennekilde/gw2apidb/pkg/gw2api"
-	"github.com/vennekilde/gw2apidb/pkg/orm"
+	"github.com/vennekilde/gw2verify/internal/orm"
+	"gitlab.com/MrGunflame/gw2api"
 	"go.uber.org/zap"
 )
 
 type History struct {
-	RID       uint32         `gorm:"auto_increment;not null;primary_key"`
-	Type      HistoryType    `gorm:"size:16;index;not null"`
-	AccountID string         `gorm:"type varchar(64);not null;index"`
-	Timestamp time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
-	Old       sql.NullString `gorm:"size:64"`
-	New       sql.NullString `gorm:"size:64"`
+	RID       int64 `bun:"r_id,pk,scanonly"`
+	Type      HistoryType
+	AccountID string
+	Timestamp time.Time `bun:",scanonly"`
+	Old       sql.NullString
+	New       sql.NullString
 }
 
 type HistoryType string
@@ -27,10 +28,12 @@ const (
 )
 
 func Collect() error {
+	ctx := context.Background()
 
 	db := orm.DB()
 	tokens := []gw2api.TokenInfo{}
-	if err := db.Table(gw2api.TableNameTokenInfo).Where("'progression'=ANY(permissions)").Find(&tokens).Error; err != nil {
+	err := db.NewSelect().Model(&tokens).Where("'progression'=ANY(permissions)").Scan(ctx)
+	if err != nil {
 		return err
 	}
 
@@ -39,10 +42,11 @@ func Collect() error {
 	return nil
 }
 
-func CollectAccount(storedAcc gw2api.Account, acc gw2api.Account) error {
+func CollectAccount(storedAcc orm.Account, acc gw2api.Account) error {
+	ctx := context.Background()
 	db := orm.DB()
 	if storedAcc.World != acc.World {
-		db.Save(&History{
+		event := &History{
 			AccountID: acc.ID,
 			Type:      WorldMove,
 			Old: sql.NullString{
@@ -53,7 +57,11 @@ func CollectAccount(storedAcc gw2api.Account, acc gw2api.Account) error {
 				String: strconv.Itoa(acc.World),
 				Valid:  true,
 			},
-		})
+		}
+		_, err := db.NewInsert().Model(event).Exec(ctx)
+		if err != nil {
+			zap.L().Warn("unable to store world move event", zap.Any("event", event), zap.Error(err))
+		}
 	}
 	if storedAcc.ID != "" {
 		if storedAcc.WvWRank > acc.WvWRank {

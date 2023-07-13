@@ -1,22 +1,33 @@
 package config
 
 import (
+	"time"
+
 	"github.com/tkanos/gonfig"
 	"go.uber.org/zap"
 )
 
-type Configration struct {
+type Configuration struct {
 	RESTAuthToken                 string
+	DeleteDataAfterDay            *time.Duration
 	ExpirationTime                int
 	TemporaryAccessExpirationTime int
 	SkipRestrictions              bool
 	Debug                         bool
+	CollectStatisticsAfter        time.Time
+
+	// DB
+	PostgresHost     string
+	PostgresPort     int
+	PostgresUser     string
+	PostgresPassword string
+	PostgresDatabase string
 }
 
 var loaded = false
-var config = Configration{}
+var config = Configuration{}
 
-func Config() Configration {
+func Config() Configuration {
 	if !loaded {
 		err := gonfig.GetConf("", &config)
 		if err != nil {

@@ -2,15 +2,17 @@ package verify
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
-	"github.com/vennekilde/gw2apidb/pkg/gw2api"
+	"github.com/vennekilde/gw2verify/internal/api"
+	"gitlab.com/MrGunflame/gw2api"
 	"go.uber.org/zap"
 )
 
 type worldSyncError error
 
-type LinkedWorlds map[int][]int
+type LinkedWorlds map[string]api.WorldLinks
 
 // Errors raised.
 var (
@@ -21,7 +23,7 @@ var lastEndTime time.Time
 var linkedWorlds LinkedWorlds
 var isWorldLinksSynced = false
 
-func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
+func BeginWorldLinksSyncLoop(gw2API *gw2api.Session) {
 	for {
 		zap.L().Info("synchronizing linked worlds")
 		if err := SynchronizeWorldLinks(gw2API); err != nil {
@@ -46,12 +48,8 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.GW2Api) {
 	}
 }
 
-func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
-	matchIds, err := gw2API.Matches()
-	if err != nil {
-		return err
-	}
-	matches, err := gw2API.MatchIds(matchIds...)
+func SynchronizeWorldLinks(gw2API *gw2api.Session) error {
+	matches, err := gw2API.WvWMatches()
 	if err != nil {
 		return err
 	}
@@ -63,21 +61,32 @@ func SynchronizeWorldLinks(gw2API *gw2api.GW2Api) error {
 		lowestEndTime := time.Time{}
 		foundWorlds := 0
 		for _, match := range matches {
-			lw.setWorldLinks(match.AllWorlds.Red)
-			lw.setWorldLinks(match.AllWorlds.Blue)
-			lw.setWorldLinks(match.AllWorlds.Green)
-			foundWorlds += len(match.AllWorlds.Red) +
-				len(match.AllWorlds.Blue) +
-				len(match.AllWorlds.Green)
-			if lowestEndTime.IsZero() || lowestEndTime.After(match.EndTime) {
-				lowestEndTime = match.EndTime
-			}
 			zap.L().Info("matchup fetched",
 				zap.Any("id", match.ID),
 				zap.Any("endtime", match.EndTime),
-				zap.Any("reds", match.AllWorlds.Red),
-				zap.Any("blues", match.AllWorlds.Blue),
-				zap.Any("greens", match.AllWorlds.Green))
+				zap.Any("reds", match.AllWorlds["red"]),
+				zap.Any("blues", match.AllWorlds["blue"]),
+				zap.Any("greens", match.AllWorlds["green"]))
+
+			// Persist world link
+			lw.setWorldLinks(match.AllWorlds["red"])
+			lw.setWorldLinks(match.AllWorlds["blue"])
+			lw.setWorldLinks(match.AllWorlds["green"])
+			// bump found world counter
+			foundWorlds += len(match.AllWorlds["red"]) +
+				len(match.AllWorlds["blue"]) +
+				len(match.AllWorlds["green"])
+
+			// Parse match end time
+			matchEndTime, err := time.Parse(time.RFC3339, match.EndTime)
+			if err != nil {
+				zap.L().Error("unable to parse matchup end time", zap.Error(err))
+				continue
+			}
+
+			if lowestEndTime.IsZero() || lowestEndTime.After(matchEndTime) {
+				lowestEndTime = matchEndTime
+			}
 		}
 		// Only update if we can find all worlds
 		if foundWorlds >= len(WorldNames) {
@@ -102,7 +111,7 @@ func setMatchupLinks(lw LinkedWorlds, lowestEndTime time.Time) {
 func createEmptyLinkedWorldsMap() LinkedWorlds {
 	newLinkedWorlds := make(LinkedWorlds)
 	for worldID := range WorldNames {
-		newLinkedWorlds[worldID] = []int{}
+		newLinkedWorlds[strconv.Itoa(worldID)] = []int{}
 	}
 	return newLinkedWorlds
 }
@@ -115,22 +124,22 @@ func (lw LinkedWorlds) setWorldLinks(allWorlds []int) {
 				links = append(links, worldID)
 			}
 		}
-		lw[worldRefID] = links
+		lw[strconv.Itoa(worldRefID)] = links
 	}
 }
 
-func matchHasWorld(match gw2api.Match, worldID int) bool {
-	for _, world := range match.AllWorlds.Red {
+func matchHasWorld(match gw2api.WvWMatch, worldID int) bool {
+	for _, world := range match.AllWorlds["red"] {
 		if world == worldID {
 			return true
 		}
 	}
-	for _, world := range match.AllWorlds.Blue {
+	for _, world := range match.AllWorlds["blue"] {
 		if world == worldID {
 			return true
 		}
 	}
-	for _, world := range match.AllWorlds.Green {
+	for _, world := range match.AllWorlds["green"] {
 		if world == worldID {
 			return true
 		}
@@ -146,7 +155,7 @@ func GetWorldLinks(worldPerspective int) (links []int, err error) {
 	if !IsWorldLinksSynchronized() {
 		return links, ErrWorldsNotSynced
 	}
-	return linkedWorlds[worldPerspective], err
+	return linkedWorlds[strconv.Itoa(worldPerspective)], err
 }
 func GetAllWorldLinks() LinkedWorlds {
 	return linkedWorlds

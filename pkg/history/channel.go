@@ -1,11 +1,12 @@
 package history
 
 import (
+	"context"
 	"time"
 
-	"github.com/vennekilde/gw2apidb/pkg/gw2api"
-	"github.com/vennekilde/gw2apidb/pkg/orm"
-	"github.com/vennekilde/gw2verify/internal/api/types"
+	"github.com/pkg/errors"
+	"github.com/vennekilde/gw2verify/internal/api"
+	"github.com/vennekilde/gw2verify/internal/orm"
 	"github.com/vennekilde/gw2verify/pkg/verify"
 )
 
@@ -17,6 +18,7 @@ type ChannelStatistics struct {
 	UnrankedUsers int
 	RankedUsers   int
 }
+
 type VoiceUserState struct {
 	Timestamp          time.Time
 	ServiceID          int
@@ -24,18 +26,31 @@ type VoiceUserState struct {
 	ChannelID          string
 	Muted              bool
 	Deafened           bool
-	WvWRank            int `json:"wvw_rank" gorm:"column:wvw_rank"`
+	WvWRank            int `json:"wvw_rank" bun:"wvw_rank"`
 	Age                int
 	VerificationStatus int
 }
 
-func CollectChannelStatistics(serviceID int, channelID string, worldPerspective int, data types.ChannelMetadata) error {
+func CollectChannelStatistics(serviceID int, channelID string, worldPerspective int, data api.ChannelMetadata) error {
+	ctx := context.Background()
 	db := orm.DB()
-	tx := db.Begin()
+
+	// Begin transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			tx.Rollback()
+		}
+	}()
+
 	ts := time.Now()
 	for _, userMetadata := range data.Users {
-		var acc gw2api.Account
-		status, _, _ := verify.StatusWithAccount(worldPerspective, serviceID, userMetadata.Id, &acc)
+		var acc orm.Account
+		status, _ := verify.Status(worldPerspective, serviceID, userMetadata.Id)
 
 		userState := VoiceUserState{
 			Timestamp:          ts,
@@ -45,11 +60,17 @@ func CollectChannelStatistics(serviceID int, channelID string, worldPerspective 
 			Muted:              userMetadata.Muted,
 			Deafened:           userMetadata.Deafened,
 			WvWRank:            acc.WvWRank,
-			Age:                acc.Age,
-			VerificationStatus: int(status.Status),
+			Age:                int(acc.Age),
+			VerificationStatus: status.Status.ID(),
 		}
-		tx.Save(&userState)
+		tx.NewInsert().Model(&userState).Exec(ctx)
 	}
-	err := tx.Commit().Error
-	return err
+
+	// Commit transaction
+	err = tx.Commit()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	committed = true
+	return nil
 }

@@ -1,49 +1,74 @@
 package verify
 
 import (
+	"context"
 	"time"
 
-	"github.com/vennekilde/gw2apidb/pkg/gw2api"
-	"github.com/vennekilde/gw2apidb/pkg/orm"
+	"github.com/vennekilde/gw2verify/internal/api"
+	"github.com/vennekilde/gw2verify/internal/orm"
+	"go.uber.org/zap"
 )
 
-// Ban contains information on length and why an account was banned
-type Ban struct {
-	gw2api.Gw2Model
-	AccountID string    `json:"account_id" gorm:"type:varchar(64)"`
-	Expires   time.Time `gorm:"default:3000-01-01 00:00:00.000000+00"`
-	Reason    string    `json:"reason" gorm:"type:text"`
-}
-
-// GetBan returns the longest active ban on an accountd, if they have any
-func GetBan(acc gw2api.Account) *Ban {
+// GetBan returns the longest active ban on an account, if they have any
+func GetBan(acc *orm.Account) *orm.Ban {
+	ctx := context.Background()
 	//Find Longest active ban
-	ban := Ban{}
-	result := orm.DB().Order("expires desc").First(&ban, "account_id = ? AND expires > NOW()", acc.ID)
-	if result.Error != nil {
+	ban := orm.Ban{}
+	result := orm.DB().NewSelect().
+		Model(&ban).
+		Where("user_id = ? AND until > NOW()", acc.UserID).
+		// Limit to longest lasting ban
+		Order("until desc").
+		Limit(1).
+		Scan(ctx)
+	if result != nil {
 		return nil
 	}
 	return &ban
 }
 
 // BanServiceUser bans a user's gw2 account for the given duration
-func BanServiceUser(duration time.Duration, reason string, serviceID int, serviceUserID string) error {
-	var link ServiceLink
-	if err := orm.DB().First(&link, "service_id = ? AND service_user_id = ?", serviceID, serviceUserID).Error; err != nil {
+func BanServiceUser(expiration time.Time, reason string, serviceID int, serviceUserID string) error {
+	ctx := context.Background()
+
+	// Extract user id from service user information
+	link, err := orm.GetServiceLink(serviceID, serviceUserID)
+	if err != nil {
 		return err
 	}
-	ban := Ban{
-		AccountID: link.AccountID,
-		Expires:   time.Now().Add(duration),
-		Reason:    reason,
+	// Format ban
+	ban := orm.Ban{
+		UserID: link.UserID,
+		BanData: api.BanData{
+			Until:  expiration,
+			Reason: reason,
+		},
 	}
-	if err := orm.DB().Save(&ban).Error; err != nil {
+	// Persist ban
+	_, err = orm.DB().NewInsert().
+		Model(&ban).
+		Exec(ctx)
+
+	if err != nil {
 		return err
 	}
 
-	var acc gw2api.Account
-	if err := orm.DB().First(&acc, "id = ?", link.AccountID).Error; err != nil {
+	// Gather all accounts associated with the now banned user
+	accounts, err := orm.GetUserAccounts(link.UserID)
+	if err != nil {
 		return err
 	}
-	return OnVerificationUpdate(acc)
+
+	//  Notify all listeners of ban
+	for _, account := range accounts {
+		err := OnVerificationUpdate(account)
+		if err != nil {
+			zap.L().Error("unable to perform verification update after ban",
+				zap.Any("account", account),
+				zap.Error(err),
+			)
+		}
+	}
+
+	return nil
 }

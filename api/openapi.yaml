@@ -1,0 +1,711 @@
+openapi: 3.0.0
+info:
+  title: Guild Wars 2 Verification API
+  version: v1
+servers:
+  - url: https://farshiverpeaks.com:8321/{version}
+    variables:
+      version:
+        default: version
+paths:
+  /v1/configuration:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+      description: Get a configuration containing relevant information for running a service bot
+      operationId: GET_v1-configuration
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+
+  /v1/updates/{service_id}/subscribe:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatus'
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '408':
+          description: Long polling timeout, no events available during request period
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Long polling rest endpoint for receiving verification updates
+      operationId: GET_v1-updates-service_id-subscribe
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+    parameters:
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/channels/{service_id}/{channel}/statistics:
+    post:
+      responses:
+        '200':
+          description: ''
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Collect statistics based on the provided parameters and save them for historical purposes
+      operationId: POST_v1-channels-service_id-channel-statistics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelMetadata'
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+    parameters:
+      - name: channel
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/properties:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Property'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Get all user properties
+      operationId: GET_v1-users-service_id-service_user_id-properties
+    put:
+      responses:
+        '200':
+          description: ''
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Set a user property
+      operationId: PUT_v1-users-service_id-service_user_id-properties
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Property name
+          schema:
+            type: string
+        - name: value
+          in: query
+          required: true
+          description: Property value
+          schema:
+            type: string
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/properties/{property}:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '404':
+          description: User does not have the requested property
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Get a user property
+      operationId: GET_v1-users-service_id-service_user_id-properties-property
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: Property name
+          schema:
+            type: string
+    parameters:
+      - name: property
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/ban:
+    put:
+      responses:
+        '200':
+          description: ''
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Ban a user's gw2 account from being verified
+      operationId: PUT_v1-users-service_id-service_user_id-ban
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanData'
+        required: true
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/apikey:
+    put:
+      responses:
+        '200':
+          description: ''
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Set a service user's API key
+      operationId: PUT_v1-users-service_id-service_user_id-apikey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APIKeyData'
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+        - name: skip-requirements
+          in: query
+          required: false
+          description: Skip the variuse apikey requirements that might be in place
+          schema:
+            type: boolean
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/apikey/name:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyName'
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Get a service user's apikey name they are required to use if apikey name restriction is enforced
+      operationId: GET_v1-users-service_id-service_user_id-apikey-name
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+        
+  /v1/users/{service_id}/{service_user_id}/verification/refresh:
+    post:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VerificationStatus'
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Forces a refresh of the API data and returns the new verification status after the API data has been refreshed. Note this can take a few seconds
+      operationId: POST_v1-users-service_id-service_user_id-verification-refresh
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/verification/status:
+    get:
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationStatusOverview'
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Get a users verification status
+      operationId: GET_v1-users-service_id-service_user_id-verification-status
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+        - name: display_name
+          in: query
+          description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+          schema:
+            type: string
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+  /v1/users/{service_id}/{service_user_id}/verification/temporary:
+    put:
+      responses:
+        '200':
+          description: expires after given amount of seconds
+          content:
+            application/json:
+              schema:
+                type: integer
+        '400':
+          $ref: '#/components/responses/trait_world_oriented_400'
+        '403':
+          $ref: '#/components/responses/trait_secured_403'
+        '500':
+          $ref: '#/components/responses/trait_error_resp'
+      description: Grant a user temporary world relation. Additionally, the "temp_expired" property will be removed from the user's properties
+      operationId: PUT_v1-users-service_id-service_user_id-verification-temporary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporaryData'
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/trait_world_oriented_world'
+    parameters:
+      - name: service_user_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: service_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: 0 = Website user id, 1 = Teamspeak database id, 2 = Discord user id
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        safe-display-error:
+          type: string
+      required:
+        - error
+        - safe-display-error
+    BanData:
+      type: object
+      properties:
+        until:
+          type: string
+          format: date-time
+        reason:
+          type: string
+      required:
+        - until
+        - reason
+    Property:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+      required:
+        - name
+        - value
+    AccessType:
+      enum:
+        - HOME_WORLD
+        - LINKED_WORLD
+      type: string
+    Configuration:
+      type: object
+      properties:
+        expiration_time:
+          type: integer
+        temporary_access_expiration_time:
+          type: integer
+        world_links:
+          description: List of worlds links
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/WorldLinks'
+      required:
+        - expiration_time
+        - temporary_access_expiration_time
+        - world_links
+    WorldLinks:
+      type: array
+      items:
+        type: integer
+    VerificationStatusOverview:
+      type: object
+      required:
+        - status
+      allOf:
+        - $ref: '#/components/schemas/VerificationStatus'
+        - type: object
+          properties:
+            service_links:
+              type: array
+              items:
+                $ref: '#/components/schemas/ServiceLink'
+            statuses:
+              type: array
+              items:
+                $ref: '#/components/schemas/VerificationStatus'
+    Status:
+      type: string
+      enum:
+        - ACCESS_DENIED_UNKNOWN
+        - ACCESS_GRANTED_HOME_WORLD
+        - ACCESS_GRANTED_LINKED_WORLD
+        - ACCESS_GRANTED_HOME_WORLD_TEMPORARY
+        - ACCESS_GRANTED_LINKED_WORLD_TEMPORARY
+        - ACCESS_DENIED_ACCOUNT_NOT_LINKED
+        - ACCESS_DENIED_EXPIRED
+        - ACCESS_DENIED_INVALID_WORLD
+        - ACCESS_DENIED_BANNED
+        - ACCESS_DENIED_REQUIREMENT_NOT_MET
+    VerificationStatus:
+      type: object
+      required:
+        - accounts
+        - status
+      properties:
+        service_link:
+          $ref: '#/components/schemas/ServiceLink'
+        status:
+          $ref: '#/components/schemas/Status'
+        account:
+          $ref: '#/components/schemas/Account'
+        ban:
+          $ref: '#/components/schemas/BanData'
+        world: 
+          type: integer
+        description:
+          type: string
+        is_primary:
+          default: true
+          type: boolean
+        attributes:
+          type: array
+          items:
+            type: string
+        expires:
+          format: date-time
+          type: string
+          description: if set, the access is only temporary and will expire at the given date
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - age
+        - world
+        - created
+        - commander
+      properties:
+        db_created:
+          type: string
+          format: date-time
+        db_updated:
+          type: string
+          format: date-time
+        id:
+          type: string
+        name:
+          type: string
+        world:
+          type: integer
+        age:
+          type: integer
+        guilds:
+          type: array
+          items:
+            type: string
+        guild_leader:
+          type: array
+          items:
+            type: string
+        access:
+          type: array
+          items:
+            type: string
+        created:
+          type: string
+          format: date-time
+        commander:
+          type: boolean
+        fractal_level:
+          type: integer
+        daily_ap:
+          type: integer
+        monthly_ap:
+          type: integer
+        wvw_rank:
+          type: integer
+        user_id:
+          type: integer
+          x-go-name: UserID
+    
+    ServiceLink:
+      type: object
+      required:
+        - service_user_id
+        - service_id
+        - primary
+      properties:
+        service_user_id:
+          type: string
+          x-go-name: ServiceUserID
+        service_id:
+          description: ID of the service the user id belongs to
+          type: integer
+          x-go-name: ServiceID
+        display_name:
+          type: string
+        primary: 
+          default: true
+          type: boolean
+        
+    TemporaryData:
+      type: object
+      properties:
+        world:
+          type: integer
+        access_type:
+          $ref: '#/components/schemas/AccessType'
+        display_name:
+          description: Display name of the user of the service. Will be stored as the latest used diplay name by that user
+          type: string
+
+    APIKeyData:
+      type: object
+      properties:
+        apikey:
+          description: The api to set for the user
+          type: string
+        primary:
+          description: Set if the user should be the primary user of that particular service. There can only be one per service per account. Setting a new primary user will override the old one
+          type: boolean
+      required:
+        - apikey
+        - primary
+
+    APIKeyName:
+      type: object
+      properties:
+        name:
+          description: The apikey name the user has to name their apikey if apikey name is enforced
+          type: string
+      required:
+        - name
+
+    ChannelMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelUserMetadata'
+      required:
+        - name
+        - users
+
+    ChannelUserMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        muted:
+          type: boolean
+        deafened:
+          type: boolean
+        streaming:
+          type: boolean
+      required:
+        - id
+        - name
+        - muted
+        - deafened
+        - streaming
+
+  responses:
+    trait_error_resp:
+      description: Endpoint was unable to complete your request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+        
+    trait_world_oriented_400:
+      description: Invalid world id provided
+    trait_secured_403:
+      description: Access token invalid
+
+  parameters:
+    trait_world_oriented_world:
+      name: world
+      in: query
+      schema:
+        type: integer
+    trait_secured_authentication:
+      name: Authentication
+      in: header
+      required: true
+      schema:
+        type: string
+  examples: {}
+  requestBodies: {}
+  headers: {}
+  securitySchemes:
+    bearerAuth:           
+      type: http
+      scheme: bearer
+      #bearerFormat: JWT 
+  links: {}
+  callbacks: {}
+security:
+  - bearerAuth: []
