@@ -12,7 +12,7 @@ CREATE TABLE "users" (
 -- map all accounts to a user id
 ALTER TABLE "accounts"
     ADD "user_id" smallint NULL,
-    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 with rows as (
   UPDATE accounts t
@@ -29,13 +29,12 @@ ALTER TABLE "accounts"
 -- map all service_links to a user id
 ALTER TABLE "service_links"
     ADD "user_id" smallint NULL,
-    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 UPDATE service_links as t
-SET user_id=subquery.user_id
-FROM (SELECT id, user_id
-      FROM accounts) AS subquery
-WHERE t.account_id=subquery.id;
+    SET user_id=subquery.user_id
+    FROM (SELECT id, user_id FROM accounts) AS subquery
+    WHERE t.account_id=subquery.id;
 
 ALTER TABLE "service_links" DROP "account_id";
 
@@ -43,7 +42,7 @@ ALTER TABLE "service_links" DROP "account_id";
 -- map all bans to a user id
 ALTER TABLE "bans"
     ADD "user_id" smallint NULL,
-    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 UPDATE bans as t
 SET user_id=subquery.user_id
@@ -134,3 +133,65 @@ ALTER TABLE "bans"
 ALTER TABLE "temporary_accesses"
 ADD CONSTRAINT "temporary_accesses_service_id_service_user_id_world" UNIQUE ("service_id", "service_user_id", "world"),
 DROP CONSTRAINT "idx_ta_service_id_service_user_id";
+
+CREATE TABLE "services" (
+  "uuid" character varying(64) NOT NULL,
+  "api_key" character varying(256) NOT NULL,
+  "name" character varying(256) NOT NULL
+);
+ALTER TABLE "services"
+    ADD CONSTRAINT "services_uuid" PRIMARY KEY ("uuid");
+
+ALTER TABLE "service_links" RENAME TO "platform_links";
+ALTER TABLE "platform_links" RENAME "service_id" TO "platform_id";
+ALTER TABLE "platform_links" RENAME "service_user_id" TO "platform_user_id";
+
+ALTER TABLE "temporary_accesses" RENAME "service_id" TO "platform_id";
+ALTER TABLE "temporary_accesses" RENAME "service_user_id" TO "platform_user_id";
+
+ALTER TABLE "voice_user_states" RENAME "service_id" TO "platform_id";
+ALTER TABLE "voice_user_states" RENAME "service_user_id" TO "platform_user_id";
+
+CREATE TABLE "properties" (
+  "db_created" timestamptz NOT NULL DEFAULT NOW()
+  "db_updated" timestamptz NOT NULL DEFAULT NOW(),
+  "service_uuid" character varying(64) NOT NULL,
+  "subject" character varying(256) NOT NULL,
+  "name" character varying(256) NOT NULL,
+  "value" character varying(1024) NOT NULL,
+);
+ALTER TABLE "properties"
+    ADD CONSTRAINT "properties_service_uuid_subject_name" PRIMARY KEY ("service_uuid", "subject", "name"),
+    ADD FOREIGN KEY ("service_uuid") REFERENCES "services" ("uuid") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "token_infos"
+    ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "histories"
+    ADD FOREIGN KEY ("account_id") REFERENCES "accounts" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE "temporary_accesses"
+    ADD "user_id" smallint NULL,
+    ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+UPDATE temporary_accesses as t
+    SET user_id=subquery.user_id
+    FROM (SELECT platform_id, platform_user_id, user_id FROM platform_links) AS subquery
+    WHERE t.platform_id = subquery.platform_id AND t.platform_user_id = subquery.platform_user_id;
+
+ALTER TABLE "temporary_accesses"
+    DROP "platform_id",
+    DROP "platform_user_id";
+
+ALTER TABLE "temporary_accesses" RENAME TO "ephemeral_associations";
+
+ALTER TABLE "ephemeral_associations"
+    ADD "until" timestamptz NULL;
+
+UPDATE "ephemeral_associations" as t
+    SET until = db_updated + 1814400
+
+    
+ALTER TABLE "ephemeral_associations"
+    ALTER "user_id" SET NOT NULL,
+    ALTER "until" SET NOT NULL;

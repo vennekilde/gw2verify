@@ -3,7 +3,7 @@ package api
 import (
 	"strings"
 
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/MrGunflame/gw2api"
 )
 
 const (
@@ -18,6 +18,10 @@ const (
 	ACCESS_GRANTED_LINKED_WORLD           = ACCESSGRANTEDLINKEDWORLD
 	ACCESS_GRANTED_LINKED_WORLD_TEMPORARY = ACCESSGRANTEDLINKEDWORLDTEMPORARY
 )
+const (
+	HOME_WORLD   = HOMEWORLD
+	LINKED_WORLD = LINKEDWORLD
+)
 
 func (s *VerificationStatus) WithStatus(status Status) *VerificationStatus {
 	s.Status = status
@@ -27,21 +31,6 @@ func (s *VerificationStatus) WithStatus(status Status) *VerificationStatus {
 func (s *VerificationStatus) WithStatusIfHigher(status Status) *VerificationStatus {
 	if status.Priority() > s.Status.Priority() {
 		s.Status = status
-	}
-	return s
-}
-
-func (s *VerificationStatusOverview) WithStatusIfHigher(verifyStatus *VerificationStatus) *VerificationStatusOverview {
-	if verifyStatus.Status.Priority() > s.Status.Priority() {
-		//s.Account = verifyStatus.Account
-		s.Attributes = verifyStatus.Attributes
-		s.Ban = verifyStatus.Ban
-		s.Description = verifyStatus.Description
-		s.Expires = verifyStatus.Expires
-		s.IsPrimary = verifyStatus.IsPrimary
-		s.ServiceLink = verifyStatus.ServiceLink
-		s.Status = verifyStatus.Status
-		s.World = verifyStatus.World
 	}
 	return s
 }

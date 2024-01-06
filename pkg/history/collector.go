@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vennekilde/gw2verify/internal/orm"
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/MrGunflame/gw2api"
+	"github.com/vennekilde/gw2verify/v2/internal/orm"
 	"go.uber.org/zap"
 )
 

@@ -9,7 +9,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 
-	"github.com/vennekilde/gw2verify/internal/config"
+	"github.com/vennekilde/gw2verify/v2/internal/config"
 )
 
 var db *bun.DB

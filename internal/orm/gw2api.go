@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/MrGunflame/gw2api"
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	"github.com/vennekilde/gw2verify/internal/api"
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
 )
 
 type Model struct {
@@ -35,7 +35,7 @@ type TokenInfo struct {
 	AccountID   string
 }
 
-func (token *TokenInfo) Persist(tx bun.Tx) (err error) {
+func (token *TokenInfo) Persist(tx bun.IDB) (err error) {
 	ctx := context.Background()
 	_, err = tx.NewInsert().
 		Model(token).
@@ -75,7 +75,7 @@ func FindLastUpdatedAPIKey(ignoreOlderThan int) (token TokenInfo, err error) {
 	return token, errors.WithStack(err)
 }
 
-func FindUserAPIKeys(userID int, ignoreOlderThan int) (tokens []TokenInfo, err error) {
+func FindUserAPIKeys(userID int64, ignoreOlderThan int) (tokens []TokenInfo, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().
 		Model(&tokens).
@@ -89,10 +89,10 @@ func FindUserAPIKeys(userID int, ignoreOlderThan int) (tokens []TokenInfo, err e
 type Account struct {
 	Model          `bun:",extend"`
 	gw2api.Account `bun:",extend"`
-	UserID         int
+	UserID         int64
 }
 
-func (acc *Account) Persist(tx bun.Tx) (err error) {
+func (acc *Account) Persist(tx bun.IDB) (err error) {
 	ctx := context.Background()
 	_, err = tx.NewInsert().
 		Model(acc).
@@ -101,7 +101,7 @@ func (acc *Account) Persist(tx bun.Tx) (err error) {
 	return errors.WithStack(err)
 }
 
-func GetUserAccounts(userID int) (accounts []Account, err error) {
+func GetUserAccounts(userID int64) (accounts []Account, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().
 		Model(&accounts).
@@ -110,23 +110,21 @@ func GetUserAccounts(userID int) (accounts []Account, err error) {
 	return accounts, errors.WithStack(err)
 }
 
-type ServiceLink struct {
-	Model           `bun:",extend"`
-	api.ServiceLink `bun:",extend"`
-
-	UserID int
+type PlatformLink struct {
+	Model            `bun:",extend"`
+	api.PlatformLink `bun:",extend"`
 }
 
-func GetServiceLink(serviceID int, serviceUserID string) (link ServiceLink, err error) {
+func GetPlatformLink(platformID int, platformUserId string) (link PlatformLink, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().
 		Model(&link).
-		Where("service_id = ? AND service_user_id = ?", serviceID, serviceUserID).
+		Where("platform_id = ? AND platform_user_id = ?", platformID, platformUserId).
 		Scan(ctx)
 	return link, errors.WithStack(err)
 }
 
-func GetUserServiceLinks(userID int) (links []ServiceLink, err error) {
+func GetUserPlatformLinks(userID int64) (links []PlatformLink, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().
 		Model(&links).
@@ -138,8 +136,6 @@ func GetUserServiceLinks(userID int) (links []ServiceLink, err error) {
 // Ban contains information on length and why an account was banned
 type Ban struct {
 	Model         `bun:",extend"`
-	api.BanData   `bun:",extend"`
+	api.Ban       `bun:",extend"`
 	bun.BaseModel `bun:"table:bans,alias:bans"`
-
-	UserID int
 }

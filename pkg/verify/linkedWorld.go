@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/vennekilde/gw2verify/internal/api"
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/MrGunflame/gw2api"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
 	"go.uber.org/zap"
 )
 
@@ -19,23 +19,33 @@ var (
 	ErrWorldsNotSynced worldSyncError = errors.New("worlds are not synched")
 )
 
-var lastEndTime time.Time
-var linkedWorlds LinkedWorlds
-var isWorldLinksSynced = false
+type Worlds struct {
+	linkedWorlds       LinkedWorlds
+	lastEndTime        time.Time
+	isWorldLinksSynced bool
 
-func BeginWorldLinksSyncLoop(gw2API *gw2api.Session) {
+	gw2API *gw2api.Session
+}
+
+func NewWorlds(gw2API *gw2api.Session) *Worlds {
+	return &Worlds{
+		gw2API: gw2API,
+	}
+}
+
+func (ws *Worlds) Start() {
 	for {
 		zap.L().Info("synchronizing linked worlds")
-		if err := SynchronizeWorldLinks(gw2API); err != nil {
+		if err := ws.SynchronizeWorldLinks(ws.gw2API); err != nil {
 			zap.L().Error("unable to synchronize matchup", zap.Error(err))
 		}
 
-		if !lastEndTime.IsZero() {
+		if !ws.lastEndTime.IsZero() {
 			// Sleep until next match
-			sleepUntil := time.Until(lastEndTime)
+			sleepUntil := time.Until(ws.lastEndTime)
 			zap.L().Info("synchronizing linked worlds once matchup is over",
 				zap.Duration("synchronizing timer", sleepUntil),
-				zap.Time("endtime", lastEndTime))
+				zap.Time("endtime", ws.lastEndTime))
 			// Sleep for at least a minute to not spam the api
 			if sleepUntil < time.Minute {
 				sleepUntil = time.Minute
@@ -48,7 +58,7 @@ func BeginWorldLinksSyncLoop(gw2API *gw2api.Session) {
 	}
 }
 
-func SynchronizeWorldLinks(gw2API *gw2api.Session) error {
+func (ws *Worlds) SynchronizeWorldLinks(gw2API *gw2api.Session) error {
 	matches, err := gw2API.WvWMatches()
 	if err != nil {
 		return err
@@ -90,8 +100,8 @@ func SynchronizeWorldLinks(gw2API *gw2api.Session) error {
 		}
 		// Only update if we can find all worlds
 		if foundWorlds >= len(WorldNames) {
-			setMatchupLinks(lw, lowestEndTime)
-			zap.L().Info("Updated linked worlds", zap.Any("linked worlds", linkedWorlds))
+			ws.setMatchupLinks(lw, lowestEndTime)
+			zap.L().Info("Updated linked worlds", zap.Any("linked worlds", ws.linkedWorlds))
 		} else {
 			zap.L().Warn("not updating linked worlds, did not find all worlds in matchups",
 				zap.Int("total worlds", len(WorldNames)),
@@ -102,18 +112,10 @@ func SynchronizeWorldLinks(gw2API *gw2api.Session) error {
 	return nil
 }
 
-func setMatchupLinks(lw LinkedWorlds, lowestEndTime time.Time) {
-	linkedWorlds = lw
-	lastEndTime = lowestEndTime
-	isWorldLinksSynced = true
-}
-
-func createEmptyLinkedWorldsMap() LinkedWorlds {
-	newLinkedWorlds := make(LinkedWorlds)
-	for worldID := range WorldNames {
-		newLinkedWorlds[strconv.Itoa(worldID)] = []int{}
-	}
-	return newLinkedWorlds
+func (ws *Worlds) setMatchupLinks(lw LinkedWorlds, lowestEndTime time.Time) {
+	ws.linkedWorlds = lw
+	ws.lastEndTime = lowestEndTime
+	ws.isWorldLinksSynced = true
 }
 
 func (lw LinkedWorlds) setWorldLinks(allWorlds []int) {
@@ -126,6 +128,29 @@ func (lw LinkedWorlds) setWorldLinks(allWorlds []int) {
 		}
 		lw[strconv.Itoa(worldRefID)] = links
 	}
+}
+
+func (ws *Worlds) IsWorldLinksSynchronized() bool {
+	return ws.isWorldLinksSynced
+}
+
+func (ws *Worlds) GetWorldLinks(worldPerspective int) (links []int, err error) {
+	if !ws.IsWorldLinksSynchronized() {
+		return links, ErrWorldsNotSynced
+	}
+	return ws.linkedWorlds[strconv.Itoa(worldPerspective)], err
+}
+
+func (ws *Worlds) GetAllWorldLinks() LinkedWorlds {
+	return ws.linkedWorlds
+}
+
+func createEmptyLinkedWorldsMap() LinkedWorlds {
+	newLinkedWorlds := make(LinkedWorlds)
+	for worldID := range WorldNames {
+		newLinkedWorlds[strconv.Itoa(worldID)] = []int{}
+	}
+	return newLinkedWorlds
 }
 
 func matchHasWorld(match gw2api.WvWMatch, worldID int) bool {
@@ -145,18 +170,4 @@ func matchHasWorld(match gw2api.WvWMatch, worldID int) bool {
 		}
 	}
 	return false
-}
-
-func IsWorldLinksSynchronized() bool {
-	return isWorldLinksSynced
-}
-
-func GetWorldLinks(worldPerspective int) (links []int, err error) {
-	if !IsWorldLinksSynchronized() {
-		return links, ErrWorldsNotSynced
-	}
-	return linkedWorlds[strconv.Itoa(worldPerspective)], err
-}
-func GetAllWorldLinks() LinkedWorlds {
-	return linkedWorlds
 }

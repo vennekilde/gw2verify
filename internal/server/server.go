@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/gin-gonic/gin"
-	"github.com/vennekilde/gw2verify/internal/api"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
 	"go.uber.org/zap"
 
 	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
@@ -11,15 +11,15 @@ import (
 
 type RESTServer struct {
 	engine  *gin.Engine
-	handler *RESTHandler
+	handler *Endpoints
 }
 
 // NewRESTServer returns a RESTServer instance configured to provide serve the verification REST API
-func NewRESTServer() *RESTServer {
+func NewRESTServer(endpoints *Endpoints) *RESTServer {
 	r := gin.Default()
 	s := &RESTServer{
 		engine:  r,
-		handler: &RESTHandler{},
+		handler: endpoints,
 	}
 
 	// AuthN middleware for handling JWT tokens

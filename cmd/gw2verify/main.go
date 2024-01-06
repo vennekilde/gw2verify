@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/MrGunflame/gw2api"
 	"github.com/alexlast/bunzap"
 	"github.com/uptrace/bun"
-	"github.com/vennekilde/gw2verify/internal/config"
-	"github.com/vennekilde/gw2verify/internal/orm"
-	"github.com/vennekilde/gw2verify/internal/server"
-	"github.com/vennekilde/gw2verify/pkg/sync"
-	"github.com/vennekilde/gw2verify/pkg/verify"
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/vennekilde/gw2verify/v2/internal/config"
+	"github.com/vennekilde/gw2verify/v2/internal/orm"
+	"github.com/vennekilde/gw2verify/v2/internal/server"
+	"github.com/vennekilde/gw2verify/v2/pkg/history"
+	"github.com/vennekilde/gw2verify/v2/pkg/sync"
+	"github.com/vennekilde/gw2verify/v2/pkg/verify"
 	"go.uber.org/zap"
 )
 
@@ -44,11 +45,23 @@ func main() {
 		}
 	}()*/
 
-	restServer := server.NewRESTServer()
+	// Services initialization
+	worldsService := verify.NewWorlds(gw2api.New())
+	verificationService := verify.NewVerification(worldsService)
+	statisticsService := history.NewStatistics(verificationService)
+	eventEmitter := verify.NewEventEmitter(verificationService)
+	syncService := sync.NewService(gw2api.New(), eventEmitter)
+	banService := verify.NewBanService(eventEmitter)
+
+	// REST endpoints
+	verificationEndpoints := server.NewVerificationEndpoint(verificationService, worldsService, statisticsService, eventEmitter, syncService, banService)
+	endpoints := server.NewEndpoints(verificationEndpoints)
+	// REST server
+	restServer := server.NewRESTServer(endpoints)
 	go restServer.Start()
 
-	go verify.BeginWorldLinksSyncLoop(gw2api.New())
-	sync.StartAPISynchronizer(gw2api.New())
+	go worldsService.Start()
+	syncService.Start()
 }
 
 type QueryHookMiddleware struct {

@@ -1,9 +1,27 @@
-# GW2 Verify for Go
+# gw2verify
 
-## Generate API doc
+A Guild Wars 2 verification backend that allows a user to link multiple Guild Wars 2 accounts.
 
-`raml2html api/api.raml > api.html`
+Integrating the backend to an application is done using the provided OpenAPI v3 spec found at [/api/openapi.yaml](https://github.com/vennekilde/gw2verify/api/openapi.yaml)
 
-## Generate API code
+Intended to be used with multiple platforms and has so far been used on Far Shiverpeaks to integrate Website, Teamspeak & Discord to the same backend.
 
-`go-raml server --ramlfile api/api.raml --dir internal/api --package api --import-path github.com/vennekilde/gw2verify/internal/api --no-apidocs`
+## Building
+
+### Docker Image
+
+`make package`
+
+The code will be compiled during the docker build process
+
+### Target: Host Machine
+
+`make build`
+
+### Target: Linux
+
+`make build_linux`
+
+### Target: Windows
+
+`make build_windows`

@@ -8,7 +8,6 @@ import (
 )
 
 type Configuration struct {
-	RESTAuthToken                 string
 	DeleteDataAfterDay            *time.Duration
 	ExpirationTime                int
 	TemporaryAccessExpirationTime int

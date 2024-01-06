@@ -9,18 +9,31 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
-	"github.com/vennekilde/gw2verify/internal/config"
-	"github.com/vennekilde/gw2verify/internal/orm"
-	"github.com/vennekilde/gw2verify/pkg/history"
-	"github.com/vennekilde/gw2verify/pkg/verify"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
+	"github.com/vennekilde/gw2verify/v2/internal/config"
+	"github.com/vennekilde/gw2verify/v2/internal/orm"
+	"github.com/vennekilde/gw2verify/v2/pkg/history"
+	"github.com/vennekilde/gw2verify/v2/pkg/verify"
 	"go.uber.org/zap"
 
-	"gitlab.com/MrGunflame/gw2api"
+	"github.com/MrGunflame/gw2api"
 )
 
-// StartAPISynchronizer starts a synchronization loop that will continuesly fetch the oldest updated API key
+type Service struct {
+	gw2API *gw2api.Session
+	em     *verify.EventEmitter
+}
+
+func NewService(gw2API *gw2api.Session, em *verify.EventEmitter) *Service {
+	return &Service{
+		gw2API: gw2API,
+		em:     em,
+	}
+}
+
+// Start starts a synchronization loop that will continuously fetch the oldest updated API key
 // and synchronize it with the gw2 api
-func StartAPISynchronizer(gw2API *gw2api.Session) {
+func (s *Service) Start() {
 	var failureCount int
 	var successCount = 0
 	var successTimestamp = time.Now()
@@ -40,22 +53,9 @@ func StartAPISynchronizer(gw2API *gw2api.Session) {
 			// if successful, this will be reset to zero
 			failureCount++
 
-			tx, err := orm.DB().Begin()
+			err := s.SynchronizeNextAPIKey(orm.DB())
 			if err != nil {
-				zap.L().Error("unable to begin transaction", zap.Error(err))
-				return
-			}
-
-			err = SynchronizeNextAPIKey(tx)
-			if err != nil {
-				tx.Rollback()
 				zap.L().Error("unable to sync api key", zap.Error(err))
-				return
-			}
-
-			err = tx.Commit()
-			if err != nil {
-				zap.L().Error("unable to commit transaction", zap.Error(err))
 				return
 			}
 
@@ -75,7 +75,7 @@ func StartAPISynchronizer(gw2API *gw2api.Session) {
 	}
 }
 
-func SynchronizeNextAPIKey(tx bun.Tx) error {
+func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	// Find next token to sync
 	window := config.Config().ExpirationTime
 	token, err := orm.FindLastUpdatedAPIKey(window)
@@ -83,19 +83,18 @@ func SynchronizeNextAPIKey(tx bun.Tx) error {
 		return err
 	}
 
-	gw2API := gw2api.New()
 	// Synchronize all data available with the api key
-	acc, err := SynchronizeAPIKey(tx, gw2API, &token)
+	acc, err := s.SynchronizeAPIKey(tx, s.gw2API, &token)
 	if err != nil {
 		// Handle failed token
-		HandleFailedTokenInfo(&token, acc, err)
+		err = s.HandleFailedTokenInfo(&token, acc, err)
 		return err
 	}
 
 	return nil
 }
 
-func HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) {
+func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) error {
 	ctx := context.Background()
 	token.UpdateLastAttemptedUpdate()
 
@@ -135,24 +134,25 @@ func HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) {
 				}
 			}
 
-			var stillValidTokens []gw2api.TokenInfo
-			orm.DB().NewSelect().
-				Model(&stillValidTokens).
-				Order("db_updated").
+			count, err := orm.DB().NewSelect().
+				Model(&orm.TokenInfo{}).
 				Where("account_id = ?, last_success >= db_updated - interval '"+strconv.Itoa(config.Config().ExpirationTime)+" seconds' OR last_success IS NULL", acc.ID).
-				Limit(1).
-				Scan(ctx)
+				Count(ctx)
+			if err != nil {
+				return err
+			}
 
-			if len(stillValidTokens) == 0 && !isBanned {
+			if count == 0 && !isBanned {
 				// delete expired data
 				orm.DB().NewDelete().Model(&token).Exec(ctx)
 				orm.DB().NewDelete().Model(&storedAcc).Exec(ctx)
 			}
 		}
 	}
+	return nil
 }
 
-func SynchronizeUser(tx bun.Tx, gw2API *gw2api.Session, userID int) error {
+func (s *Service) SynchronizeUser(tx bun.IDB, gw2API *gw2api.Session, userID int64) error {
 	window := config.Config().ExpirationTime
 	tokens, err := orm.FindUserAPIKeys(userID, window)
 	if err != nil {
@@ -160,7 +160,7 @@ func SynchronizeUser(tx bun.Tx, gw2API *gw2api.Session, userID int) error {
 	}
 
 	for _, token := range tokens {
-		acc, err := SynchronizeAPIKey(tx, gw2API, &token)
+		acc, err := s.SynchronizeAPIKey(tx, gw2API, &token)
 		if err != nil {
 			zap.L().Error("unable to synchronize user account",
 				zap.Any("account", acc),
@@ -172,7 +172,7 @@ func SynchronizeUser(tx bun.Tx, gw2API *gw2api.Session, userID int) error {
 	return nil
 }
 
-func SynchronizeAPIKey(tx bun.Tx, gw2API *gw2api.Session, token *orm.TokenInfo) (acc *orm.Account, err error) {
+func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo) (acc *orm.Account, err error) {
 	ctx := context.Background()
 	// Fetch newest account data from gw2 api
 	gw2Acc, err := gw2API.WithAccessToken(token.APIKey).Account()
@@ -195,7 +195,18 @@ func SynchronizeAPIKey(tx bun.Tx, gw2API *gw2api.Session, token *orm.TokenInfo) 
 	history.CollectAccount(storedAcc, gw2Acc)
 
 	// Notify listeners if needed of verification changes (if any)
-	verify.CheckForVerificationUpdate(storedAcc, gw2Acc)
+	var newAcc, oldAcc api.Account
+	newAcc.FromGW2API(gw2Acc)
+	oldAcc.FromGW2API(storedAcc.Account)
+	if s.em.ShouldEmitAccount(&oldAcc, &newAcc) {
+		var user api.User
+		err = orm.QueryGetUser(tx, &user, acc.UserID).
+			Scan(ctx)
+		if err != nil {
+			return acc, errors.WithStack(err)
+		}
+		s.em.Emit(&user)
+	}
 
 	// persist any changes made to the account data
 	err = acc.Persist(tx)
@@ -228,18 +239,4 @@ func SynchronizeAPIKey(tx bun.Tx, gw2API *gw2api.Session, token *orm.TokenInfo) 
 	}
 
 	return acc, nil
-}
-
-func SynchronizeLinkedUser(tx bun.Tx, gw2API *gw2api.Session, serviceID int, serviceUserID string) (err error, userErr error) {
-	link, err := orm.GetServiceLink(serviceID, serviceUserID)
-	if err != nil {
-		return err, nil
-	}
-	if link.UserID == 0 {
-		err = errors.New("no service link found with that user id and service id")
-		return err, err
-	}
-
-	err = SynchronizeUser(tx, gw2API, link.UserID)
-	return nil, err
 }

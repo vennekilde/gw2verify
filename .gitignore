@@ -23,11 +23,7 @@ _testmain.go
 *.test
 *.prof
 
-#
-\.vscode/launch\.json
-
+dev.env
 cmd/gw2verify/debug
-
 build/
-
 bin/

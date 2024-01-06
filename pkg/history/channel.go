@@ -5,24 +5,16 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/vennekilde/gw2verify/internal/api"
-	"github.com/vennekilde/gw2verify/internal/orm"
-	"github.com/vennekilde/gw2verify/pkg/verify"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
+	"github.com/vennekilde/gw2verify/v2/internal/orm"
+	"github.com/vennekilde/gw2verify/v2/pkg/verify"
+	"go.uber.org/zap"
 )
-
-type ChannelStatistics struct {
-	Timestamp     time.Time
-	Users         int
-	MutedUsers    int
-	DeafenedUsers int
-	UnrankedUsers int
-	RankedUsers   int
-}
 
 type VoiceUserState struct {
 	Timestamp          time.Time
-	ServiceID          int
-	ServiceUserID      string
+	PlatformID         int
+	PlatformUserID     string
 	ChannelID          string
 	Muted              bool
 	Deafened           bool
@@ -31,7 +23,17 @@ type VoiceUserState struct {
 	VerificationStatus int
 }
 
-func CollectChannelStatistics(serviceID int, channelID string, worldPerspective int, data api.ChannelMetadata) error {
+type Statistics struct {
+	verificationModule *verify.Verification
+}
+
+func NewStatistics(verification *verify.Verification) *Statistics {
+	return &Statistics{
+		verificationModule: verification,
+	}
+}
+
+func (s *Statistics) WorldStatistics(platformID int, channelID string, worldPerspective int, data api.ChannelMetadata) error {
 	ctx := context.Background()
 	db := orm.DB()
 
@@ -49,19 +51,24 @@ func CollectChannelStatistics(serviceID int, channelID string, worldPerspective 
 
 	ts := time.Now()
 	for _, userMetadata := range data.Users {
-		var acc orm.Account
-		status, _ := verify.Status(worldPerspective, serviceID, userMetadata.Id)
+		var user api.User
+		err = orm.QueryGetPlatformUser(tx, &user, platformID, userMetadata.Id).
+			Model(&user).
+			Scan(ctx)
+		if err != nil {
+			zap.L().Error("error while fetching user data", zap.Error(err))
+			continue
+		}
+		status := s.verificationModule.Status(worldPerspective, &user)
 
 		userState := VoiceUserState{
 			Timestamp:          ts,
-			ServiceID:          serviceID,
-			ServiceUserID:      userMetadata.Id,
+			PlatformID:         platformID,
+			PlatformUserID:     userMetadata.Id,
 			ChannelID:          channelID,
 			Muted:              userMetadata.Muted,
 			Deafened:           userMetadata.Deafened,
-			WvWRank:            acc.WvWRank,
-			Age:                int(acc.Age),
-			VerificationStatus: status.Status.ID(),
+			VerificationStatus: status.ID(),
 		}
 		tx.NewInsert().Model(&userState).Exec(ctx)
 	}
