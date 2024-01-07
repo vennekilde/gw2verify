@@ -1,18 +1,26 @@
-# Build args
-ARG MODULE_NAME=gw2verify
-
+# argument for Go version
+ARG GO_VERSION=1.21
+ 
+# STAGE 1: building the executable
+FROM golang:${GO_VERSION}-alpine AS build
+ 
+RUN apk add --no-cache git
+WORKDIR /src
+COPY ./go.mod ./go.sum ./
+RUN go mod download
+COPY ./ ./
+# Build the executable
+RUN CGO_ENABLED=0 go build \
+    -installsuffix 'static' \
+    -o /app ./cmd/gw2verify/main.go
+ 
+# STAGE 2: build the container to run
 FROM gcr.io/distroless/static AS final
-# Build args
-ARG MODULE_NAME
-# Copy our static executable
-# Note: bin is renamed to "app" as we cannot use build args or env vars in ENTRYPOINT when using scratch image
-COPY bin/${MODULE_NAME} /go/bin/app
-# Use an unprivileged user.
+ 
 USER nonroot:nonroot
-
-EXPOSE 5000/tcp
-WORKDIR /go/bin/
-# Port on which the service will be exposed.
-# EXPOSE 5005
-# Run the hello binary.
-ENTRYPOINT ["/go/bin/app", "-logtostderr=true"] 
+ 
+# copy compiled app
+COPY --from=build --chown=nonroot:nonroot /app /app
+ 
+# run binary; use vector form
+ENTRYPOINT ["/app"]
