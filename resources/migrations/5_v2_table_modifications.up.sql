@@ -131,8 +131,8 @@ ALTER TABLE "bans"
     RENAME "expires" TO "until";
 
 ALTER TABLE "temporary_accesses"
-ADD CONSTRAINT "temporary_accesses_service_id_service_user_id_world" UNIQUE ("service_id", "service_user_id", "world"),
-DROP CONSTRAINT "idx_ta_service_id_service_user_id";
+    ADD CONSTRAINT "temporary_accesses_service_id_service_user_id_world" UNIQUE ("service_id", "service_user_id", "world"),
+    DROP CONSTRAINT "idx_ta_service_id_service_user_id";
 
 CREATE TABLE "services" (
   "uuid" character varying(64) NOT NULL,
@@ -153,12 +153,12 @@ ALTER TABLE "voice_user_states" RENAME "service_id" TO "platform_id";
 ALTER TABLE "voice_user_states" RENAME "service_user_id" TO "platform_user_id";
 
 CREATE TABLE "properties" (
-  "db_created" timestamptz NOT NULL DEFAULT NOW()
+  "db_created" timestamptz NOT NULL DEFAULT NOW(),
   "db_updated" timestamptz NOT NULL DEFAULT NOW(),
   "service_uuid" character varying(64) NOT NULL,
   "subject" character varying(256) NOT NULL,
   "name" character varying(256) NOT NULL,
-  "value" character varying(1024) NOT NULL,
+  "value" character varying(1024) NOT NULL
 );
 ALTER TABLE "properties"
     ADD CONSTRAINT "properties_service_uuid_subject_name" PRIMARY KEY ("service_uuid", "subject", "name"),
@@ -189,9 +189,8 @@ ALTER TABLE "ephemeral_associations"
     ADD "until" timestamptz NULL;
 
 UPDATE "ephemeral_associations" as t
-    SET until = db_updated + 1814400
+    SET until = db_updated + 1814400 * interval '1 second';
 
-    
 ALTER TABLE "ephemeral_associations"
     ALTER "user_id" SET NOT NULL,
     ALTER "until" SET NOT NULL;

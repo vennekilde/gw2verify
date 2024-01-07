@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS "voice_user_states";
 CREATE TABLE "public"."voice_user_states" (
     "timestamp" timestamptz DEFAULT now() NOT NULL,
     "service_id" int NOT NULL,
@@ -13,3 +12,7 @@ CREATE TABLE "public"."voice_user_states" (
 ) WITH (oids = false);
 
 CREATE INDEX "voice_user_states_channel_id" ON "voice_user_states" ("channel_id");
+CREATE INDEX "voice_user_states_timestamp" ON "voice_user_states" ("timestamp");
+CREATE INDEX "voice_user_states_timestamp_service_id_channel_id" ON "voice_user_states" ("timestamp", "service_id", "channel_id");
+CREATE INDEX "voice_user_states_timestamp_wvw_rank_channel_id" ON "voice_user_states" ("timestamp" DESC, "wvw_rank", "channel_id");
+CREATE INDEX "voice_user_states_wvw_rank" ON "voice_user_states" ("wvw_rank");

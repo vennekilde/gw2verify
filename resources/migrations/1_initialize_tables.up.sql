@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS "accounts";
 CREATE TABLE "public"."accounts" (
     "db_created" timestamptz,
     "db_updated" timestamptz,
@@ -18,8 +17,6 @@ CREATE TABLE "public"."accounts" (
     CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
 ) WITH (oids = false);
 
-
-DROP TABLE IF EXISTS "service_links";
 CREATE TABLE "public"."service_links" (
     "db_created" timestamptz DEFAULT now() NOT NULL,
     "db_updated" timestamptz DEFAULT now() NOT NULL,
@@ -32,7 +29,6 @@ CREATE TABLE "public"."service_links" (
 ) WITH (oids = false);
 
 
-DROP TABLE IF EXISTS "temporary_accesses";
 CREATE TABLE "public"."temporary_accesses" (
     "db_created" timestamptz,
     "db_updated" timestamptz,
@@ -42,8 +38,6 @@ CREATE TABLE "public"."temporary_accesses" (
     CONSTRAINT "idx_ta_service_id_service_user_id" UNIQUE ("service_id", "service_user_id")
 ) WITH (oids = false);
 
-
-DROP TABLE IF EXISTS "token_infos";
 CREATE TABLE "public"."token_infos" (
     "db_created" timestamptz DEFAULT now() NOT NULL,
     "db_updated" timestamptz DEFAULT now() NOT NULL,
@@ -55,3 +49,17 @@ CREATE TABLE "public"."token_infos" (
     "permissions" character varying(255)[],
     CONSTRAINT "token_infos_pkey" PRIMARY KEY ("id")
 ) WITH (oids = false);
+
+
+CREATE TABLE "public"."histories" (
+    "r_id" BIGSERIAL NOT NULL,
+    "type" character varying(16) NOT NULL,
+    "account_id" character varying(64) NOT NULL,
+    "timestamp" timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "old" character varying(64),
+    "new" character varying(64),
+    CONSTRAINT "histories_pkey" PRIMARY KEY ("r_id")
+) WITH (oids = false);
+CREATE INDEX "histories_account_id" ON "histories" ("account_id");
+CREATE INDEX "histories_type" ON "histories" ("type");
+

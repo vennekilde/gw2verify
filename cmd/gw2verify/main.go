@@ -7,13 +7,16 @@ import (
 
 	"github.com/MrGunflame/gw2api"
 	"github.com/alexlast/bunzap"
+	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 	"github.com/vennekilde/gw2verify/v2/internal/config"
+	"github.com/vennekilde/gw2verify/v2/internal/migrations"
 	"github.com/vennekilde/gw2verify/v2/internal/orm"
 	"github.com/vennekilde/gw2verify/v2/internal/server"
 	"github.com/vennekilde/gw2verify/v2/pkg/history"
 	"github.com/vennekilde/gw2verify/v2/pkg/sync"
 	"github.com/vennekilde/gw2verify/v2/pkg/verify"
+	"github.com/vennekilde/gw2verify/v2/resources"
 	"go.uber.org/zap"
 )
 
@@ -32,11 +35,19 @@ func main() {
 	if config.Config().Debug {
 		// Print all sql queries
 		bunzapHook.SlowDuration = 0
+	} else {
+		// Set global gin mode to release mode
+		gin.SetMode(gin.ReleaseMode)
 	}
 	hook := QueryHookMiddleware{
 		Next: bunzap.NewQueryHook(bunzapHook),
 	}
 	orm.DB().AddQueryHook(hook)
+
+	// Migrate DB
+	if err := migrations.MigrateDB(orm.DB().DB, resources.Migrations); err != nil {
+		zap.L().Panic("could not migrate database", zap.Error(err))
+	}
 
 	/*go func() {
 		statistics.Collect()

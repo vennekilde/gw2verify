@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS "voice_user_states";

@@ -1,4 +1,3 @@
-DROP TABLE IF EXISTS "bans";
 CREATE TABLE "public"."bans" (
     "db_created" timestamptz DEFAULT now() NOT NULL,
     "db_updated" timestamptz DEFAULT now() NOT NULL,

@@ -80,6 +80,10 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	window := config.Config().ExpirationTime
 	token, err := orm.FindLastUpdatedAPIKey(window)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			time.Sleep(5 * time.Second)
+			return nil
+		}
 		return err
 	}
 
