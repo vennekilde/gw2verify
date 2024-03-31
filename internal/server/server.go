@@ -57,5 +57,5 @@ func NewRESTServer(endpoints *Endpoints) *RESTServer {
 // Start launches the HTTP server
 // Note: this method will block the calling goroutine indefinitely unless an error happens.
 func (s *RESTServer) Start() {
-	s.engine.Run("127.0.0.1:8080")
+	s.engine.Run("0.0.0.0:8080")
 }
