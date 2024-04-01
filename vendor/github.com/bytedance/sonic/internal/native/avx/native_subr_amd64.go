@@ -8,16 +8,16 @@ import (
 )
 
 const (
-    _entry__f32toa = 31136
+    _entry__f32toa = 31168
     _entry__f64toa = 192
-    _entry__format_significand = 35248
+    _entry__format_significand = 35344
     _entry__format_integer = 3040
+    _entry__get_by_path = 25696
     _entry__fsm_exec = 17920
     _entry__advance_string = 14320
-    _entry__advance_string_default = 36640
+    _entry__advance_string_default = 36736
     _entry__do_skip_number = 20528
-    _entry__get_by_path = 25680
-    _entry__skip_one_fast = 22160
+    _entry__skip_one_fast = 22176
     _entry__html_escape = 8912
     _entry__i64toa = 3472
     _entry__u64toa = 3584
@@ -26,18 +26,18 @@ const (
     _entry__skip_array = 17872
     _entry__skip_number = 21792
     _entry__skip_object = 20160
-    _entry__skip_one = 21936
+    _entry__skip_one = 21952
     _entry__unquote = 6576
-    _entry__validate_one = 21984
-    _entry__validate_utf8 = 29888
-    _entry__validate_utf8_fast = 30560
+    _entry__validate_one = 22000
+    _entry__validate_utf8 = 29904
+    _entry__validate_utf8_fast = 30576
     _entry__value = 12320
     _entry__vnumber = 15648
     _entry__atof_eisel_lemire64 = 10160
     _entry__atof_native = 11712
     _entry__decimal_to_f64 = 10528
-    _entry__right_shift = 36208
-    _entry__left_shift = 35712
+    _entry__right_shift = 36304
+    _entry__left_shift = 35808
     _entry__vsigned = 17200
     _entry__vstring = 14144
     _entry__vunsigned = 17520
@@ -48,11 +48,11 @@ const (
     _stack__f64toa = 80
     _stack__format_significand = 24
     _stack__format_integer = 16
+    _stack__get_by_path = 280
     _stack__fsm_exec = 168
     _stack__advance_string = 64
     _stack__advance_string_default = 64
     _stack__do_skip_number = 48
-    _stack__get_by_path = 280
     _stack__skip_one_fast = 176
     _stack__html_escape = 72
     _stack__i64toa = 16
@@ -60,7 +60,7 @@ const (
     _stack__lspace = 8
     _stack__quote = 56
     _stack__skip_array = 176
-    _stack__skip_number = 88
+    _stack__skip_number = 104
     _stack__skip_object = 176
     _stack__skip_one = 176
     _stack__unquote = 88
@@ -84,11 +84,11 @@ const (
     _size__f64toa = 2848
     _size__format_significand = 464
     _size__format_integer = 432
+    _size__get_by_path = 4208
     _size__fsm_exec = 1692
     _size__advance_string = 1280
     _size__advance_string_default = 944
     _size__do_skip_number = 924
-    _size__get_by_path = 4208
     _size__skip_one_fast = 3016
     _size__html_escape = 1248
     _size__i64toa = 48
@@ -96,14 +96,14 @@ const (
     _size__lspace = 144
     _size__quote = 1696
     _size__skip_array = 48
-    _size__skip_number = 144
+    _size__skip_number = 160
     _size__skip_object = 48
     _size__skip_one = 48
     _size__unquote = 2272
     _size__validate_one = 48
     _size__validate_utf8 = 672
-    _size__validate_utf8_fast = 544
-    _size__value = 1316
+    _size__validate_utf8_fast = 560
+    _size__value = 1308
     _size__vnumber = 1552
     _size__atof_eisel_lemire64 = 368
     _size__atof_native = 608
@@ -168,6 +168,24 @@ var (
         {423, 16},
         {424, 8},
         {426, 0},
+    }
+    _pcsp__get_by_path = [][2]uint32{
+        {1, 0},
+        {4, 8},
+        {6, 16},
+        {8, 24},
+        {10, 32},
+        {12, 40},
+        {13, 48},
+        {4012, 104},
+        {4016, 48},
+        {4017, 40},
+        {4019, 32},
+        {4021, 24},
+        {4023, 16},
+        {4025, 8},
+        {4026, 0},
+        {4194, 104},
     }
     _pcsp__fsm_exec = [][2]uint32{
         {1, 0},
@@ -238,24 +256,6 @@ var (
         {858, 8},
         {859, 0},
         {924, 48},
-    }
-    _pcsp__get_by_path = [][2]uint32{
-        {1, 0},
-        {4, 8},
-        {6, 16},
-        {8, 24},
-        {10, 32},
-        {12, 40},
-        {13, 48},
-        {4012, 104},
-        {4016, 48},
-        {4017, 40},
-        {4019, 32},
-        {4021, 24},
-        {4023, 16},
-        {4025, 8},
-        {4026, 0},
-        {4194, 104},
     }
     _pcsp__skip_one_fast = [][2]uint32{
         {1, 0},
@@ -345,13 +345,17 @@ var (
         {6, 16},
         {8, 24},
         {10, 32},
-        {100, 40},
-        {101, 32},
-        {103, 24},
-        {105, 16},
-        {107, 8},
-        {108, 0},
-        {139, 40},
+        {12, 40},
+        {13, 48},
+        {107, 56},
+        {111, 48},
+        {112, 40},
+        {114, 32},
+        {116, 24},
+        {118, 16},
+        {120, 8},
+        {121, 0},
+        {145, 56},
     }
     _pcsp__skip_object = [][2]uint32{
         {1, 0},
@@ -431,7 +435,7 @@ var (
         {506, 16},
         {508, 8},
         {509, 0},
-        {1316, 88},
+        {1308, 88},
     }
     _pcsp__vnumber = [][2]uint32{
         {1, 0},
@@ -571,11 +575,11 @@ var Funcs = []loader.CFunc{
     {"_f64toa", _entry__f64toa, _size__f64toa, _stack__f64toa, _pcsp__f64toa},
     {"_format_significand", _entry__format_significand, _size__format_significand, _stack__format_significand, _pcsp__format_significand},
     {"_format_integer", _entry__format_integer, _size__format_integer, _stack__format_integer, _pcsp__format_integer},
+    {"_get_by_path", _entry__get_by_path, _size__get_by_path, _stack__get_by_path, _pcsp__get_by_path},
     {"_fsm_exec", _entry__fsm_exec, _size__fsm_exec, _stack__fsm_exec, _pcsp__fsm_exec},
     {"_advance_string", _entry__advance_string, _size__advance_string, _stack__advance_string, _pcsp__advance_string},
     {"_advance_string_default", _entry__advance_string_default, _size__advance_string_default, _stack__advance_string_default, _pcsp__advance_string_default},
     {"_do_skip_number", _entry__do_skip_number, _size__do_skip_number, _stack__do_skip_number, _pcsp__do_skip_number},
-    {"_get_by_path", _entry__get_by_path, _size__get_by_path, _stack__get_by_path, _pcsp__get_by_path},
     {"_skip_one_fast", _entry__skip_one_fast, _size__skip_one_fast, _stack__skip_one_fast, _pcsp__skip_one_fast},
     {"_html_escape", _entry__html_escape, _size__html_escape, _stack__html_escape, _pcsp__html_escape},
     {"_i64toa", _entry__i64toa, _size__i64toa, _stack__i64toa, _pcsp__i64toa},

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 
@@ -76,6 +75,9 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 
 	// For each parameter of the Operation
 	for _, parameter := range operationParameters {
+		if options.ExcludeRequestQueryParams && parameter.Value.In == openapi3.ParameterInQuery {
+			continue
+		}
 		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
 			return
 		}
@@ -137,24 +139,33 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 	}
 
 	// Set default value if needed
-	if !options.SkipSettingDefaults && value == nil && schema != nil && schema.Default != nil {
+	if !options.SkipSettingDefaults && value == nil && schema != nil {
 		value = schema.Default
-		req := input.Request
-		switch parameter.In {
-		case openapi3.ParameterInPath:
-			// Path parameters are required.
-			// Next check `parameter.Required && !found` will catch this.
-		case openapi3.ParameterInQuery:
-			q := req.URL.Query()
-			q.Add(parameter.Name, fmt.Sprintf("%v", value))
-			req.URL.RawQuery = q.Encode()
-		case openapi3.ParameterInHeader:
-			req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
-		case openapi3.ParameterInCookie:
-			req.AddCookie(&http.Cookie{
-				Name:  parameter.Name,
-				Value: fmt.Sprintf("%v", value),
-			})
+		for _, subSchema := range schema.AllOf {
+			if subSchema.Value.Default != nil {
+				value = subSchema.Value.Default
+				break // This is not a validation of the schema itself, so use the first default value.
+			}
+		}
+
+		if value != nil {
+			req := input.Request
+			switch parameter.In {
+			case openapi3.ParameterInPath:
+				// Path parameters are required.
+				// Next check `parameter.Required && !found` will catch this.
+			case openapi3.ParameterInQuery:
+				q := req.URL.Query()
+				q.Add(parameter.Name, fmt.Sprintf("%v", value))
+				req.URL.RawQuery = q.Encode()
+			case openapi3.ParameterInHeader:
+				req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
+			case openapi3.ParameterInCookie:
+				req.AddCookie(&http.Cookie{
+					Name:  parameter.Name,
+					Value: fmt.Sprintf("%v", value),
+				})
+			}
 		}
 	}
 
@@ -208,7 +219,7 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	if req.Body != http.NoBody && req.Body != nil {
 		defer req.Body.Close()
 		var err error
-		if data, err = ioutil.ReadAll(req.Body); err != nil {
+		if data, err = io.ReadAll(req.Body); err != nil {
 			return &RequestError{
 				Input:       input,
 				RequestBody: requestBody,

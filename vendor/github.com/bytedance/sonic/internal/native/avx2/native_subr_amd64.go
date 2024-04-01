@@ -8,17 +8,17 @@ import (
 )
 
 const (
-    _entry__f32toa = 34624
+    _entry__f32toa = 34656
     _entry__f64toa = 320
-    _entry__format_significand = 38736
+    _entry__format_significand = 38880
     _entry__format_integer = 3168
+    _entry__get_by_path = 28896
     _entry__fsm_exec = 21072
     _entry__advance_ns = 16928
     _entry__advance_string = 17664
-    _entry__advance_string_default = 40160
+    _entry__advance_string_default = 40320
     _entry__do_skip_number = 23696
-    _entry__get_by_path = 28864
-    _entry__skip_one_fast = 25936
+    _entry__skip_one_fast = 25968
     _entry__html_escape = 10560
     _entry__i64toa = 3600
     _entry__u64toa = 3712
@@ -27,18 +27,18 @@ const (
     _entry__skip_array = 21024
     _entry__skip_number = 25392
     _entry__skip_object = 23088
-    _entry__skip_one = 25536
+    _entry__skip_one = 25552
     _entry__unquote = 7888
-    _entry__validate_one = 25584
-    _entry__validate_utf8 = 31040
-    _entry__validate_utf8_fast = 31984
+    _entry__validate_one = 25600
+    _entry__validate_utf8 = 31072
+    _entry__validate_utf8_fast = 32016
     _entry__value = 15376
     _entry__vnumber = 18800
     _entry__atof_eisel_lemire64 = 12624
     _entry__atof_native = 14768
     _entry__decimal_to_f64 = 13056
-    _entry__right_shift = 39696
-    _entry__left_shift = 39200
+    _entry__right_shift = 39840
+    _entry__left_shift = 39344
     _entry__vsigned = 20352
     _entry__vstring = 17424
     _entry__vunsigned = 20672
@@ -49,12 +49,12 @@ const (
     _stack__f64toa = 80
     _stack__format_significand = 24
     _stack__format_integer = 16
+    _stack__get_by_path = 272
     _stack__fsm_exec = 144
     _stack__advance_ns = 8
     _stack__advance_string = 56
     _stack__advance_string_default = 48
     _stack__do_skip_number = 48
-    _stack__get_by_path = 272
     _stack__skip_one_fast = 184
     _stack__html_escape = 72
     _stack__i64toa = 16
@@ -62,7 +62,7 @@ const (
     _stack__lspace = 8
     _stack__quote = 56
     _stack__skip_array = 152
-    _stack__skip_number = 88
+    _stack__skip_number = 104
     _stack__skip_object = 152
     _stack__skip_one = 152
     _stack__unquote = 72
@@ -86,12 +86,12 @@ const (
     _size__f64toa = 2848
     _size__format_significand = 464
     _size__format_integer = 432
+    _size__get_by_path = 2176
     _size__fsm_exec = 1468
     _size__advance_ns = 496
     _size__advance_string = 1088
     _size__advance_string_default = 768
     _size__do_skip_number = 1360
-    _size__get_by_path = 2176
     _size__skip_one_fast = 2428
     _size__html_escape = 2064
     _size__i64toa = 48
@@ -99,19 +99,19 @@ const (
     _size__lspace = 224
     _size__quote = 2736
     _size__skip_array = 48
-    _size__skip_number = 144
+    _size__skip_number = 160
     _size__skip_object = 48
     _size__skip_one = 48
     _size__unquote = 2480
-    _size__validate_one = 48
+    _size__validate_one = 64
     _size__validate_utf8 = 672
     _size__validate_utf8_fast = 2608
-    _size__value = 1004
+    _size__value = 1000
     _size__vnumber = 1552
     _size__atof_eisel_lemire64 = 368
     _size__atof_native = 608
     _size__decimal_to_f64 = 1712
-    _size__right_shift = 400
+    _size__right_shift = 416
     _size__left_shift = 496
     _size__vsigned = 320
     _size__vstring = 144
@@ -171,6 +171,24 @@ var (
         {423, 16},
         {424, 8},
         {426, 0},
+    }
+    _pcsp__get_by_path = [][2]uint32{
+        {1, 0},
+        {4, 8},
+        {6, 16},
+        {8, 24},
+        {10, 32},
+        {12, 40},
+        {13, 48},
+        {2049, 88},
+        {2053, 48},
+        {2054, 40},
+        {2056, 32},
+        {2058, 24},
+        {2060, 16},
+        {2062, 8},
+        {2063, 0},
+        {2170, 88},
     }
     _pcsp__fsm_exec = [][2]uint32{
         {1, 0},
@@ -246,24 +264,6 @@ var (
         {1283, 8},
         {1287, 0},
         {1360, 48},
-    }
-    _pcsp__get_by_path = [][2]uint32{
-        {1, 0},
-        {4, 8},
-        {6, 16},
-        {8, 24},
-        {10, 32},
-        {12, 40},
-        {13, 48},
-        {2049, 88},
-        {2053, 48},
-        {2054, 40},
-        {2056, 32},
-        {2058, 24},
-        {2060, 16},
-        {2062, 8},
-        {2063, 0},
-        {2170, 88},
     }
     _pcsp__skip_one_fast = [][2]uint32{
         {1, 0},
@@ -353,13 +353,17 @@ var (
         {6, 16},
         {8, 24},
         {10, 32},
-        {100, 40},
-        {101, 32},
-        {103, 24},
-        {105, 16},
-        {107, 8},
-        {108, 0},
-        {139, 40},
+        {12, 40},
+        {13, 48},
+        {107, 56},
+        {111, 48},
+        {112, 40},
+        {114, 32},
+        {116, 24},
+        {118, 16},
+        {120, 8},
+        {121, 0},
+        {145, 56},
     }
     _pcsp__skip_object = [][2]uint32{
         {1, 0},
@@ -430,14 +434,14 @@ var (
         {10, 32},
         {12, 40},
         {13, 48},
-        {988, 88},
-        {992, 48},
-        {993, 40},
-        {995, 32},
-        {997, 24},
-        {999, 16},
-        {1001, 8},
-        {1004, 0},
+        {982, 88},
+        {986, 48},
+        {987, 40},
+        {989, 32},
+        {991, 24},
+        {993, 16},
+        {995, 8},
+        {1000, 0},
     }
     _pcsp__vnumber = [][2]uint32{
         {1, 0},
@@ -577,12 +581,12 @@ var Funcs = []loader.CFunc{
     {"_f64toa", _entry__f64toa, _size__f64toa, _stack__f64toa, _pcsp__f64toa},
     {"_format_significand", _entry__format_significand, _size__format_significand, _stack__format_significand, _pcsp__format_significand},
     {"_format_integer", _entry__format_integer, _size__format_integer, _stack__format_integer, _pcsp__format_integer},
+    {"_get_by_path", _entry__get_by_path, _size__get_by_path, _stack__get_by_path, _pcsp__get_by_path},
     {"_fsm_exec", _entry__fsm_exec, _size__fsm_exec, _stack__fsm_exec, _pcsp__fsm_exec},
     {"_advance_ns", _entry__advance_ns, _size__advance_ns, _stack__advance_ns, _pcsp__advance_ns},
     {"_advance_string", _entry__advance_string, _size__advance_string, _stack__advance_string, _pcsp__advance_string},
     {"_advance_string_default", _entry__advance_string_default, _size__advance_string_default, _stack__advance_string_default, _pcsp__advance_string_default},
     {"_do_skip_number", _entry__do_skip_number, _size__do_skip_number, _stack__do_skip_number, _pcsp__do_skip_number},
-    {"_get_by_path", _entry__get_by_path, _size__get_by_path, _stack__get_by_path, _pcsp__get_by_path},
     {"_skip_one_fast", _entry__skip_one_fast, _size__skip_one_fast, _stack__skip_one_fast, _pcsp__skip_one_fast},
     {"_html_escape", _entry__html_escape, _size__html_escape, _stack__html_escape, _pcsp__html_escape},
     {"_i64toa", _entry__i64toa, _size__i64toa, _stack__i64toa, _pcsp__i64toa},
