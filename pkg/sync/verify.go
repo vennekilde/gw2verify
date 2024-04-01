@@ -63,7 +63,7 @@ func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspectiv
 	}
 
 	// Check if apikey & account pass restrictions
-	if ignoreRestrictions == false {
+	if !ignoreRestrictions {
 		// @DISABLED
 		// Ensure no one is already linked with this account
 		//var storedLink PlatformLink
@@ -102,6 +102,13 @@ func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspectiv
 		s.em.Emit(user)
 	}
 
+	// Persist account info
+	ormAcc := orm.Account{Account: acc, UserID: user.Id}
+	err = ormAcc.Persist(tx)
+	if err != nil {
+		return errors.WithStack(err), nil
+	}
+
 	// Persist token info
 	token := orm.TokenInfo{
 		TokenInfo:   gw2Token,
@@ -113,13 +120,6 @@ func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspectiv
 	err = token.Persist(tx)
 	if err != nil {
 		return err, nil
-	}
-
-	// Persist account info
-	ormAcc := orm.Account{Account: acc, UserID: user.Id}
-	err = ormAcc.Persist(tx)
-	if err != nil {
-		return errors.WithStack(err), nil
 	}
 
 	err = tx.Commit()
