@@ -92,6 +92,7 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	if err != nil {
 		// Handle failed token
 		err = s.HandleFailedTokenInfo(&token, acc, err)
+		time.Sleep(5 * time.Second)
 		return err
 	}
 
