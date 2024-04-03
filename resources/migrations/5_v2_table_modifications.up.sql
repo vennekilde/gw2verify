@@ -54,19 +54,19 @@ WHERE t.account_id=subquery.id;
 -- map token permissions to jsonb
 ALTER TABLE "token_infos"
     ALTER "permissions" TYPE character varying(255);
-UPDATE token_infos SET permissions = regexp_replace(permissions, '{', '["');
-UPDATE token_infos SET permissions = regexp_replace(permissions, '}', '"]');
-UPDATE token_infos SET permissions = regexp_replace(permissions, ', ', '","');
+UPDATE token_infos SET permissions = regexp_replace(permissions, '{', '["', 'g');
+UPDATE token_infos SET permissions = regexp_replace(permissions, '}', '"]', 'g');
+UPDATE token_infos SET permissions = regexp_replace(permissions, '([[:alpha:]]|\d), ?', '","', 'g');
 ALTER TABLE "token_infos"
     ALTER "permissions" TYPE jsonb USING permissions::jsonb;
 
 -- map account guilds to jsonb
 ALTER TABLE "accounts" 
     ALTER "guilds" TYPE character varying(255);
-UPDATE accounts SET guilds = regexp_replace(guilds, '{', '["');
-UPDATE accounts SET guilds = regexp_replace(guilds, '}', '"]');
-UPDATE accounts SET guilds = regexp_replace(guilds, ', ', '","');
-UPDATE accounts SET guilds = regexp_replace(guilds, ', ?', '","');
+UPDATE accounts SET guilds = regexp_replace(guilds, '{', '["', 'g');
+UPDATE accounts SET guilds = regexp_replace(guilds, '}', '"]', 'g');
+UPDATE accounts SET guilds = regexp_replace(guilds, ', ', '","', 'g');
+UPDATE accounts SET guilds = regexp_replace(guilds, '([[:alpha:]]|\d), ?', '","', 'g');
 ALTER TABLE "accounts"
     ALTER "guilds" TYPE jsonb USING guilds::jsonb;
 UPDATE accounts SET guilds = '[]' WHERE CAST("guilds" AS text) = '[""]' ;
@@ -74,18 +74,18 @@ UPDATE accounts SET guilds = '[]' WHERE CAST("guilds" AS text) = '[""]' ;
 -- map account guilds to jsonb
 ALTER TABLE "accounts" 
     ALTER "guild_leader" TYPE character varying(255);
-UPDATE accounts SET guild_leader = regexp_replace(guild_leader, '{', '["');
-UPDATE accounts SET guild_leader = regexp_replace(guild_leader, '}', '"]');
-UPDATE accounts SET guild_leader = regexp_replace(guild_leader, ', ?', '","');
+UPDATE accounts SET guild_leader = regexp_replace(guild_leader, '{', '["', 'g');
+UPDATE accounts SET guild_leader = regexp_replace(guild_leader, '}', '"]', 'g');
+UPDATE accounts SET guild_leader = regexp_replace(guild_leader, '([[:alpha:]]|\d), ?', '","', 'g');
 ALTER TABLE "accounts"
     ALTER "guild_leader" TYPE jsonb USING guild_leader::jsonb;
 
 -- map account access to jsonb
 ALTER TABLE "accounts" 
     ALTER "access" TYPE character varying(255);
-UPDATE accounts SET access = regexp_replace(access, '{', '["');
-UPDATE accounts SET access = regexp_replace(access, '}', '"]');
-UPDATE accounts SET access = regexp_replace(access, ', ', '","');
+UPDATE accounts SET access = regexp_replace(access, '{', '["', 'g');
+UPDATE accounts SET access = regexp_replace(access, '}', '"]', 'g');
+UPDATE accounts SET access = regexp_replace(access, '([[:alpha:]]|\d), ?', '","', 'g');
 ALTER TABLE "accounts"
     ALTER "access" TYPE jsonb USING access::jsonb;
 
