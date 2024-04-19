@@ -2,6 +2,7 @@ package orm
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"time"
 
@@ -121,6 +122,9 @@ func GetPlatformLink(platformID int, platformUserId string) (link PlatformLink, 
 		Model(&link).
 		Where("platform_id = ? AND platform_user_id = ?", platformID, platformUserId).
 		Scan(ctx)
+	if err == sql.ErrNoRows {
+		return link, nil
+	}
 	return link, errors.WithStack(err)
 }
 
