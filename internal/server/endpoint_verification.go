@@ -91,7 +91,8 @@ func (e *VerificationEndpoint) PostVerificationPlatformUserRefresh(c *gin.Contex
 		return
 	}
 	if link.UserID == 0 {
-		ThrowReqError(c, err.Error(), err, http.StatusNotFound)
+		c.Status(http.StatusNotFound)
+		return
 	}
 
 	gw2API := gw2api.New()
