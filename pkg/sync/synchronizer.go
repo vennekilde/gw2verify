@@ -23,8 +23,42 @@ import (
 )
 
 const (
-	AchivementIDRealmAvenger = 283
+	CustomAchievementIDWvWRank = -1
 )
+
+const (
+	AchievementIDRealmAvenger     = 283
+	AchievementIDSupplySpend      = 306
+	AchievementIDDollyEscort      = 285
+	AchievementIDDollyKill        = 288
+	AchievementIDObjectiveCapture = 303
+	AchievementIDObjectiveDefend  = 319
+	AchievementIDCampCapture      = 291
+	AchievementIDCampDefend       = 310
+	AchievementIDTowerCapture     = 297
+	AchievementIDTowerDefend      = 322
+	AchievementIDKeepCapture      = 300
+	AchievementIDKeepDefend       = 316
+	AchievementIDCastleCapture    = 294
+	AchievementIDCastleDefend     = 313
+)
+
+var achievements = []int{
+	AchievementIDRealmAvenger,
+	AchievementIDSupplySpend,
+	AchievementIDDollyEscort,
+	AchievementIDDollyKill,
+	AchievementIDObjectiveCapture,
+	AchievementIDObjectiveDefend,
+	AchievementIDCampCapture,
+	AchievementIDCampDefend,
+	AchievementIDTowerCapture,
+	AchievementIDTowerDefend,
+	AchievementIDKeepCapture,
+	AchievementIDKeepDefend,
+	AchievementIDCastleCapture,
+	AchievementIDCastleDefend,
+}
 
 type Service struct {
 	pool sync.Pool
@@ -269,37 +303,26 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 		}
 	}
 
-	// Synchronize activity from achivements
-	var kills int
-	if !slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "progression") }) {
-		goto skipActivity
-	}
-
-	{ // Fetch achivements
-		achivements, err := gw2API.AccountAchievements(AchivementIDRealmAvenger)
+	// Synchronize achivements
+	if slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "progression") }) {
+		achivements, err := gw2API.AccountAchievements(achievements...)
 		if err != nil && err.Error() != "all ids provided are invalid" {
 			zap.L().Error("unable to fetch account achivements", zap.Error(err))
-			goto skipActivity
-		}
-
-		if len(achivements) > 0 {
+		} else {
 			for _, achivement := range achivements {
-				if achivement.Current > kills {
-					kills = achivement.Current
-				}
+				history.UpdateAchievement(tx, acc.ID, achivement.ID, achivement.Current)
 			}
 		}
-	}
 
-	// Update activity
-	err = history.UpdateActivity(tx, acc.ID, acc.WvWRank, kills)
-	if err != nil {
-		return acc, errors.WithStack(err)
+		// Update WvW rank with fake achievement id
+		history.UpdateAchievement(tx, acc.ID, CustomAchievementIDWvWRank, acc.WvWRank)
 	}
-skipActivity:
 
 	// update last success
-	token.UpdateLastSuccessfulUpdate()
+	err = token.UpdateLastSuccessfulUpdate()
+	if err != nil {
+		return acc, err
+	}
 
 	if config.Config().Debug {
 		zap.L().Info("updated account", zap.String("account name", acc.Name))
