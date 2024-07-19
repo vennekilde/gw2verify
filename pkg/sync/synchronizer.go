@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"database/sql"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/MrGunflame/gw2api"
+)
+
+const (
+	AchivementIDRealmAvenger   = 283
+	AchivementIDRealmAvengerIX = 7912
 )
 
 type Service struct {
@@ -235,6 +241,35 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 			return acc, err
 		}
 	}
+
+	// Synchronize activity from achivements
+	var kills int
+	if !slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "progression") }) {
+		goto skipActivity
+	}
+
+	{ // Fetch achivements
+		achivements, err := gw2API.AccountAchievements(AchivementIDRealmAvenger, AchivementIDRealmAvengerIX)
+		if err != nil && err.Error() != "all ids provided are invalid" {
+			zap.L().Error("unable to fetch account achivements", zap.Error(err))
+			goto skipActivity
+		}
+
+		if len(achivements) > 0 {
+			for _, achivement := range achivements {
+				if achivement.Current > kills {
+					kills = achivement.Current
+				}
+			}
+		}
+	}
+
+	// Update activity
+	err = history.UpdateActivity(tx, acc.UserID, acc.WvWRank, kills)
+	if err != nil {
+		return acc, errors.WithStack(err)
+	}
+skipActivity:
 
 	// update last success
 	token.UpdateLastSuccessfulUpdate()
