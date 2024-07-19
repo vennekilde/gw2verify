@@ -3,6 +3,7 @@ package verify
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -13,7 +14,8 @@ import (
 
 func GetOrInsertUser(tx bun.Tx, platformID int, platformUserID string) (*api.User, error) {
 	user := api.User{}
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	err := tx.NewSelect().
 		Model(&user).
@@ -39,7 +41,8 @@ func GetOrInsertUser(tx bun.Tx, platformID int, platformUserID string) (*api.Use
 
 // SetOrReplacePlatformLink creates or replaces a service link between a service user and an account
 func SetOrReplacePlatformLink(idb bun.IDB, platformID int, platformUserID string, primary bool, userID int64) (err error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	link := orm.PlatformLink{}
 
 	committed := false

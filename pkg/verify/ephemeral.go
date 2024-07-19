@@ -12,7 +12,8 @@ import (
 // GrantEphemeralWorldAssignment temporarily mark the account as being from the given world
 // This will grant the user temporary access, if they are set to be a from a world that would normally grant access
 func GrantEphemeralWorldAssignment(tx bun.Tx, userID int64, world int, until time.Time) (err error, userErr error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	temporaryAccess := api.EphemeralAssociation{
 		UserID: userID,
 		World:  &world,

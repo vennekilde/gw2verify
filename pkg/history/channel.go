@@ -34,7 +34,8 @@ func NewStatistics(verification *verify.Verification) *Statistics {
 }
 
 func (s *Statistics) WorldStatistics(platformID int, channelID string, worldPerspective int, data api.ChannelMetadata) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	db := orm.DB()
 
 	// Begin transaction

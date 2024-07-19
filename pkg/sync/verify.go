@@ -23,7 +23,8 @@ var FreeToPlayWvWRankRestriction = 0
 
 // SetAPIKeyByUserService sets an apikey from a user of a specific service
 func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspective *int, platformID int, platformUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	tx, err := orm.DB().Begin()
 	if err != nil {

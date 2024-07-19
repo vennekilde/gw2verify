@@ -106,7 +106,8 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 }
 
 func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	token.UpdateLastAttemptedUpdate()
 
 	if acc != nil {
@@ -184,7 +185,8 @@ func (s *Service) SynchronizeUser(tx bun.IDB, gw2API *gw2api.Session, userID int
 }
 
 func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo) (acc *orm.Account, err error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	// Fetch newest account data from gw2 api
 	gw2Acc, err := gw2API.WithAccessToken(token.APIKey).Account()
 	if err != nil {

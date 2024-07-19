@@ -12,7 +12,7 @@ import (
 
 // (GET /v1/guilds/{guild_ident}/users)
 func (e *Endpoints) GetGuildUsers(c *gin.Context, guildIdent api.GuildIdent) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	guildID := guildIdent

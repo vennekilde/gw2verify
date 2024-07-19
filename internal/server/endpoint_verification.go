@@ -52,7 +52,7 @@ func (e *VerificationEndpoint) GetVerificationPlatformUserUpdates(c *gin.Context
 
 // (GET /v1/verification/platform/{platform_id}/users/{platform_user_id})
 func (e *VerificationEndpoint) GetVerificationPlatformUserStatus(c *gin.Context, platformId api.PlatformId, platformUserId api.PlatformUserId, params api.GetVerificationPlatformUserStatusParams) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var user api.User

@@ -13,7 +13,7 @@ import (
 
 // (GET /v1/services/{service_uuid}/properties)
 func (e *Endpoints) GetServiceProperties(c *gin.Context, serviceUuid api.ServiceUuid) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var properties []api.Property
@@ -31,7 +31,7 @@ func (e *Endpoints) GetServiceProperties(c *gin.Context, serviceUuid api.Service
 
 // (GET /v1/services/{service_uuid}/properties/{subject})
 func (e *Endpoints) GetServiceSubjectProperties(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var properties []api.Property
@@ -49,7 +49,7 @@ func (e *Endpoints) GetServiceSubjectProperties(c *gin.Context, serviceUuid api.
 
 // (PUT /v1/services/{service_uuid}/properties/{subject})
 func (e *Endpoints) PutServiceSubjectProperties(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var properties []api.Property
@@ -78,7 +78,7 @@ func (e *Endpoints) PutServiceSubjectProperties(c *gin.Context, serviceUuid api.
 
 // (GET /v1/services/{service_uuid}/properties/{subject}/{property_name})
 func (e *Endpoints) GetServiceSubjectProperty(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject, propertyName api.PropertyName) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var property api.Property
@@ -96,7 +96,7 @@ func (e *Endpoints) GetServiceSubjectProperty(c *gin.Context, serviceUuid api.Se
 
 // (PUT /v1/services/{service_uuid}/properties/{subject}/{property_name})
 func (e *Endpoints) PutServiceSubjectProperty(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject, propertyName api.PropertyName) {
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(10*time.Second))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// decode request
