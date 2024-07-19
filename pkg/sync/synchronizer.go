@@ -267,7 +267,7 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 	}
 
 	// Update activity
-	err = history.UpdateActivity(tx, acc.UserID, acc.WvWRank, kills)
+	err = history.UpdateActivity(tx, acc.ID, acc.WvWRank, kills)
 	if err != nil {
 		return acc, errors.WithStack(err)
 	}

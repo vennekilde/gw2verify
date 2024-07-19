@@ -10,7 +10,7 @@ import (
 
 type Activity struct {
 	ID        int64     `bun:",pk"`
-	UserID    int64     `json:"user_id"`
+	AccountID string    `json:"account_id"`
 	Timestamp time.Time `json:"timestamp"`
 	Rank      int       `json:"rank"`
 	Kills     int       `json:"kills"`
@@ -18,11 +18,11 @@ type Activity struct {
 
 // Equivalent checks if two activities contain the same stats and ignores the timestamp
 func (a Activity) Equivalent(b Activity) bool {
-	return a.UserID == b.UserID && a.Rank == b.Rank && a.Kills == b.Kills
+	return a.AccountID == b.AccountID && a.Rank == b.Rank && a.Kills == b.Kills
 }
 
 // UpdateActivity updates the activity of a user
-func UpdateActivity(tx bun.IDB, userID int64, rank int, kills int) error {
+func UpdateActivity(tx bun.IDB, accountID string, rank int, kills int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -30,7 +30,7 @@ func UpdateActivity(tx bun.IDB, userID int64, rank int, kills int) error {
 	var activities []Activity
 	err := tx.NewSelect().
 		Model(&activities).
-		Where("user_id = ?", userID).
+		Where("account_id = ?", accountID).
 		Order("timestamp DESC").
 		Limit(2).
 		Scan(ctx)
@@ -40,7 +40,7 @@ func UpdateActivity(tx bun.IDB, userID int64, rank int, kills int) error {
 
 	// Insert activity
 	activity := Activity{
-		UserID:    userID,
+		AccountID: accountID,
 		Rank:      rank,
 		Kills:     kills,
 		Timestamp: time.Now(),
