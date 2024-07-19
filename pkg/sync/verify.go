@@ -23,9 +23,7 @@ var FreeToPlayWvWRankRestriction = 0
 
 // SetAPIKeyByUserService sets an apikey from a user of a specific service
 func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspective *int, platformID int, platformUserID string, primary bool, apikey string, ignoreRestrictions bool) (err error, userErr error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+	ctx := context.Background()
 	tx, err := orm.DB().Begin()
 	if err != nil {
 		return errors.WithStack(err), nil
@@ -152,7 +150,7 @@ func (s *Service) processRestrictions(gw2api *gw2api.Session, worldPerspective *
 func (s *Service) processAPIKeyRestrictions(worldPerspective *int, acc gw2api.Account, token gw2api.TokenInfo, platformID int, platformUserID string) (err error) {
 	//Check if api key is named correctly
 	apiKeyCode := verify.GetAPIKeyCode(platformID, platformUserID)
-	if strings.Contains(strings.ToUpper(token.Name), apiKeyCode) == false {
+	if !strings.Contains(strings.ToUpper(token.Name), apiKeyCode) {
 		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", verify.GetAPIKeyName(worldPerspective, platformID, platformUserID), token.Name)
 	}
 

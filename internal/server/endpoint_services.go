@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/vennekilde/gw2verify/v2/internal/api"
@@ -13,8 +12,7 @@ import (
 
 // (GET /v1/services/{service_uuid}/properties)
 func (e *Endpoints) GetServiceProperties(c *gin.Context, serviceUuid api.ServiceUuid) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var properties []api.Property
 	err := orm.DB().NewSelect().
@@ -31,8 +29,7 @@ func (e *Endpoints) GetServiceProperties(c *gin.Context, serviceUuid api.Service
 
 // (GET /v1/services/{service_uuid}/properties/{subject})
 func (e *Endpoints) GetServiceSubjectProperties(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var properties []api.Property
 	err := orm.DB().NewSelect().
@@ -49,8 +46,7 @@ func (e *Endpoints) GetServiceSubjectProperties(c *gin.Context, serviceUuid api.
 
 // (PUT /v1/services/{service_uuid}/properties/{subject})
 func (e *Endpoints) PutServiceSubjectProperties(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var properties []api.Property
 	// decode request
@@ -78,8 +74,7 @@ func (e *Endpoints) PutServiceSubjectProperties(c *gin.Context, serviceUuid api.
 
 // (GET /v1/services/{service_uuid}/properties/{subject}/{property_name})
 func (e *Endpoints) GetServiceSubjectProperty(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject, propertyName api.PropertyName) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var property api.Property
 	err := orm.DB().NewSelect().
@@ -96,8 +91,7 @@ func (e *Endpoints) GetServiceSubjectProperty(c *gin.Context, serviceUuid api.Se
 
 // (PUT /v1/services/{service_uuid}/properties/{subject}/{property_name})
 func (e *Endpoints) PutServiceSubjectProperty(c *gin.Context, serviceUuid api.ServiceUuid, subject api.Subject, propertyName api.PropertyName) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	// decode request
 	value, err := io.ReadAll(c.Request.Body)

@@ -30,8 +30,7 @@ func (e *Endpoints) GetPlatformUserUpdates(c *gin.Context, platformId api.Platfo
 
 // (GET /v1/platform/{platform_id}/users/{platform_user_id})
 func (e *Endpoints) GetPlatformUser(c *gin.Context, platformId api.PlatformId, platformUserId api.PlatformUserId, params api.GetPlatformUserParams) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	var user api.User
 	err := orm.QueryGetPlatformUser(orm.DB(), &user, platformId, platformUserId).

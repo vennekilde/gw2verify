@@ -23,8 +23,7 @@ func (a Activity) Equivalent(b Activity) bool {
 
 // UpdateActivity updates the activity of a user
 func UpdateActivity(tx bun.IDB, accountID string, rank int, kills int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	// Get last two activities
 	var activities []Activity

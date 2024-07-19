@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/vennekilde/gw2verify/v2/internal/api"
@@ -12,8 +11,7 @@ import (
 
 // (GET /v1/guilds/{guild_ident}/users)
 func (e *Endpoints) GetGuildUsers(c *gin.Context, guildIdent api.GuildIdent) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	guildID := guildIdent
 

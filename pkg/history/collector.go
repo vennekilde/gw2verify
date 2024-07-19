@@ -28,8 +28,7 @@ const (
 )
 
 func Collect() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	db := orm.DB()
 	tokens := []gw2api.TokenInfo{}
@@ -44,8 +43,7 @@ func Collect() error {
 }
 
 func CollectAccount(storedAcc orm.Account, acc gw2api.Account) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	db := orm.DB()
 	if storedAcc.World != acc.World {
 		event := &History{

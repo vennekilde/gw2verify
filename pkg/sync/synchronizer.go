@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,15 +27,27 @@ const (
 )
 
 type Service struct {
-	gw2API *gw2api.Session
-	em     *verify.EventEmitter
+	pool sync.Pool
+	em   *verify.EventEmitter
 }
 
-func NewService(gw2API *gw2api.Session, em *verify.EventEmitter) *Service {
+func NewService(em *verify.EventEmitter) *Service {
 	return &Service{
-		gw2API: gw2API,
-		em:     em,
+		pool: sync.Pool{
+			New: func() interface{} {
+				return gw2api.New()
+			},
+		},
+		em: em,
 	}
+}
+
+func (s *Service) getGW2API() *gw2api.Session {
+	return s.pool.Get().(*gw2api.Session)
+}
+
+func (s *Service) putGW2API(gw2API *gw2api.Session) {
+	s.pool.Put(gw2API)
 }
 
 // Start starts a synchronization loop that will continuously fetch the oldest updated API key
@@ -59,11 +72,18 @@ func (s *Service) Start() {
 			// if successful, this will be reset to zero
 			failureCount++
 
-			err := s.SynchronizeNextAPIKey(orm.DB())
-			if err != nil {
-				zap.L().Error("unable to sync api key", zap.Error(err))
-				return
-			}
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			go func(cancel func()) {
+				defer cancel()
+				err := s.SynchronizeNextAPIKey(orm.DB())
+				if err != nil {
+					zap.L().Error("unable to sync api key", zap.Error(err))
+					return
+				}
+			}(cancel)
+
+			// Wait for context to timeout or be cancelled
+			<-ctx.Done()
 
 			// reset failure counter
 			failureCount = 0
@@ -93,8 +113,15 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 		return err
 	}
 
+	err = token.UpdateLastAttemptedUpdate()
+	if err != nil {
+		return err
+	}
+
+	gw2API := s.getGW2API()
+	defer s.putGW2API(gw2API)
 	// Synchronize all data available with the api key
-	acc, err := s.SynchronizeAPIKey(tx, s.gw2API, &token)
+	acc, err := s.SynchronizeAPIKey(tx, gw2API, &token)
 	if err != nil {
 		// Handle failed token
 		err = s.HandleFailedTokenInfo(&token, acc, err)
@@ -106,9 +133,7 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 }
 
 func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	token.UpdateLastAttemptedUpdate()
+	ctx := context.Background()
 
 	if acc != nil {
 		zap.L().Error("could not synchronize apikey",
@@ -185,8 +210,7 @@ func (s *Service) SynchronizeUser(tx bun.IDB, gw2API *gw2api.Session, userID int
 }
 
 func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo) (acc *orm.Account, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	// Fetch newest account data from gw2 api
 	gw2Acc, err := gw2API.WithAccessToken(token.APIKey).Account()
 	if err != nil {

@@ -31,8 +31,7 @@ func GetActiveBan(bans []api.Ban) *api.Ban {
 
 // GetBan returns the longest active ban on an account, if they have any
 func GetBan(acc *orm.Account) *orm.Ban {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	//Find Longest active ban
 	ban := orm.Ban{}
 	result := orm.DB().NewSelect().
@@ -61,8 +60,7 @@ func (bs *BanService) BanServiceUser(expiration time.Time, reason string, platfo
 
 // BanServiceUser bans a user's gw2 account for the given duration
 func (bs *BanService) BanUser(expiration time.Time, reason string, userID int64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	// Format ban
 	ban := orm.Ban{

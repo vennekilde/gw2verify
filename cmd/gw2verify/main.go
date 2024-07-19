@@ -61,7 +61,7 @@ func main() {
 	verificationService := verify.NewVerification(worldsService)
 	statisticsService := history.NewStatistics(verificationService)
 	eventEmitter := verify.NewEventEmitter(verificationService)
-	syncService := sync.NewService(gw2api.New(), eventEmitter)
+	syncService := sync.NewService(eventEmitter)
 	banService := verify.NewBanService(eventEmitter)
 
 	// REST endpoints
