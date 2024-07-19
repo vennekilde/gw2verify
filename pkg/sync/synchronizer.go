@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -53,8 +54,9 @@ func (s *Service) putGW2API(gw2API *gw2api.Session) {
 // Start starts a synchronization loop that will continuously fetch the oldest updated API key
 // and synchronize it with the gw2 api
 func (s *Service) Start() {
-	var failureCount int
-	var successCount = 0
+	var consecutiveFailureCount atomic.Int32
+	var failureCount atomic.Int32
+	var successCount atomic.Int32
 	var successTimestamp = time.Now()
 	for {
 		func() {
@@ -65,12 +67,10 @@ func (s *Service) Start() {
 			}()
 
 			// Throttle if we experience excessive failures
-			if failureCount >= 10 {
+			if consecutiveFailureCount.Load() >= 10 {
 				zap.L().Warn("10 consecutive failures, sleeping for 10 seconds")
 				time.Sleep(10 * time.Second)
 			}
-			// if successful, this will be reset to zero
-			failureCount++
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			go func(cancel func()) {
@@ -78,24 +78,26 @@ func (s *Service) Start() {
 				err := s.SynchronizeNextAPIKey(orm.DB())
 				if err != nil {
 					zap.L().Error("unable to sync api key", zap.Error(err))
+					consecutiveFailureCount.Add(1)
+					failureCount.Add(1)
 					return
 				}
+				consecutiveFailureCount.Store(0)
+				successCount.Add(1)
 			}(cancel)
 
 			// Wait for context to timeout or be cancelled
 			<-ctx.Done()
 
-			// reset failure counter
-			failureCount = 0
-
 			// Print basic performance number every 10th minute
-			successCount++
 			if time.Since(successTimestamp).Minutes() >= 10 {
 				zap.L().Info("statistics past 10 minutes",
-					zap.Int("successes", successCount),
-					zap.Int("current consecutive failures", failureCount))
+					zap.Int32("successes", successCount.Load()),
+					zap.Int32("failures", consecutiveFailureCount.Load()),
+					zap.Int32("current consecutive failures", consecutiveFailureCount.Load()))
 				successTimestamp = time.Now()
-				successCount = 0
+				successCount.Store(0)
+				failureCount.Store(0)
 			}
 		}()
 	}
