@@ -23,8 +23,7 @@ import (
 )
 
 const (
-	AchivementIDRealmAvenger   = 283
-	AchivementIDRealmAvengerIX = 7912
+	AchivementIDRealmAvenger = 283
 )
 
 type Service struct {
@@ -277,7 +276,7 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 	}
 
 	{ // Fetch achivements
-		achivements, err := gw2API.AccountAchievements(AchivementIDRealmAvenger, AchivementIDRealmAvengerIX)
+		achivements, err := gw2API.AccountAchievements(AchivementIDRealmAvenger)
 		if err != nil && err.Error() != "all ids provided are invalid" {
 			zap.L().Error("unable to fetch account achivements", zap.Error(err))
 			goto skipActivity
