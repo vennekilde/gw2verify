@@ -154,20 +154,18 @@ func (s *Service) processAPIKeyRestrictions(worldPerspective *int, acc gw2api.Ac
 		return fmt.Errorf("APIKey name incorrect. You need to name your api key \"%s\" instead of \"%s\"", verify.GetAPIKeyName(worldPerspective, platformID, platformUserID), token.Name)
 	}
 
-	//freeToPlay := IsFreeToPlay(acc)
-
-	//FreeToPlay restrictions
-	//if freeToPlay {
-	//Ensure progression permission is present
-	hasProgression := Contains(token.Permissions, "progression")
-
-	//Ensure characters permission is present
-	hasCharacters := Contains(token.Permissions, "characters")
-
-	if !hasProgression || !hasCharacters {
-		return errors.New("missing apikey permission \"characters\" and/or \"progression\"")
+	//Check if api key has the correct permissions
+	requiredPermissions := []string{"progression", "characters", "wvw"}
+	missingPermissions := make([]string, 0, 3)
+	for _, perm := range requiredPermissions {
+		if !Contains(token.Permissions, perm) {
+			missingPermissions = append(missingPermissions, perm)
+		}
 	}
-	//}
+
+	if len(missingPermissions) > 0 {
+		return fmt.Errorf("missing apikey permission(s) %s. Please create a new api key with the following permissions enabled: %s", strings.Join(missingPermissions, ", "), strings.Join(requiredPermissions, ", "))
+	}
 
 	return err
 }
