@@ -156,7 +156,7 @@ func (s *Service) processAPIKeyRestrictions(worldPerspective *int, acc gw2api.Ac
 
 	//Check if api key has the correct permissions
 	requiredPermissions := []string{"progression", "characters", "wvw"}
-	missingPermissions := make([]string, 0, 3)
+	missingPermissions := make([]string, 0, len(requiredPermissions))
 	for _, perm := range requiredPermissions {
 		if !Contains(token.Permissions, perm) {
 			missingPermissions = append(missingPermissions, perm)
@@ -164,7 +164,7 @@ func (s *Service) processAPIKeyRestrictions(worldPerspective *int, acc gw2api.Ac
 	}
 
 	if len(missingPermissions) > 0 {
-		return fmt.Errorf("missing apikey permission(s) %s. Please create a new api key with the following permissions enabled: %s", strings.Join(missingPermissions, ", "), strings.Join(requiredPermissions, ", "))
+		return fmt.Errorf("missing apikey permissions: [%s]. Please create a new api key with the following permissions enabled: [%s]", strings.Join(missingPermissions, ", "), strings.Join(requiredPermissions, ", "))
 	}
 
 	return err
