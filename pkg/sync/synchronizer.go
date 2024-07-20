@@ -23,7 +23,8 @@ import (
 )
 
 const (
-	CustomAchievementIDWvWRank = -1
+	CustomAchievementIDWvWRank  = -1
+	CustomAchievementIDPlayTime = -2
 )
 
 const (
@@ -336,6 +337,12 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 		err = history.UpdateAchievement(tx, acc.ID, CustomAchievementIDWvWRank, acc.WvWRank)
 		if err != nil {
 			zap.L().Error("unable to update account achivement wvw rank", zap.Error(err))
+		}
+
+		// Update playtime with fake achievement id
+		err = history.UpdateAchievement(tx, acc.ID, CustomAchievementIDPlayTime, int(acc.Age.Seconds()))
+		if err != nil {
+			zap.L().Error("unable to update account achivement playtime", zap.Error(err))
 		}
 	}
 
