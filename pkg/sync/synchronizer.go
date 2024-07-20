@@ -95,7 +95,7 @@ func (s *Service) Start() {
 	var successCount atomic.Int32
 	var successTimestamp = time.Now()
 
-	syncInterval := config.Config().SyncInterval
+	conf := config.Config()
 	for {
 		func() {
 			defer func() {
@@ -110,9 +110,7 @@ func (s *Service) Start() {
 				time.Sleep(10 * time.Second)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), syncInterval)
-			go func(cancel func()) {
-				defer cancel()
+			go func() {
 				err := s.SynchronizeNextAPIKey(orm.DB())
 				if err != nil {
 					zap.L().Error("unable to sync api key", zap.Error(err))
@@ -122,10 +120,10 @@ func (s *Service) Start() {
 				}
 				consecutiveFailureCount.Store(0)
 				successCount.Add(1)
-			}(cancel)
+			}()
 
-			// Wait for context to timeout or be cancelled
-			<-ctx.Done()
+			// Wait for next sync interval
+			time.Sleep(conf.SyncInterval)
 
 			// Print basic performance number every 10th minute
 			if time.Since(successTimestamp).Minutes() >= 10 {
@@ -147,7 +145,6 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	token, err := orm.FindLastUpdatedAPIKey(window)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			time.Sleep(5 * time.Second)
 			return nil
 		}
 		return err
@@ -165,7 +162,6 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	if err != nil {
 		// Handle failed token
 		err = s.HandleFailedTokenInfo(&token, acc, err)
-		time.Sleep(5 * time.Second)
 		return err
 	}
 
