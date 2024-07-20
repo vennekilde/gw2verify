@@ -340,7 +340,7 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 		}
 
 		// Update playtime with fake achievement id
-		err = history.UpdateAchievement(tx, acc.ID, CustomAchievementIDPlayTime, int(acc.Age.Seconds()))
+		err = history.UpdateAchievement(tx, acc.ID, CustomAchievementIDPlayTime, int(acc.Age))
 		if err != nil {
 			zap.L().Error("unable to update account achivement playtime", zap.Error(err))
 		}
