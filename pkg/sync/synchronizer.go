@@ -94,6 +94,8 @@ func (s *Service) Start() {
 	var failureCount atomic.Int32
 	var successCount atomic.Int32
 	var successTimestamp = time.Now()
+
+	syncInterval := config.Config().SyncInterval
 	for {
 		func() {
 			defer func() {
@@ -108,7 +110,7 @@ func (s *Service) Start() {
 				time.Sleep(10 * time.Second)
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), syncInterval)
 			go func(cancel func()) {
 				defer cancel()
 				err := s.SynchronizeNextAPIKey(orm.DB())

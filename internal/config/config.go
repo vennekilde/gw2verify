@@ -14,6 +14,7 @@ type Configuration struct {
 	SkipRestrictions              bool
 	Debug                         bool
 	CollectStatisticsAfter        time.Time
+	SyncInterval                  time.Duration
 
 	// DB
 	PostgresHost     string
@@ -24,7 +25,9 @@ type Configuration struct {
 }
 
 var loaded = false
-var config = Configuration{}
+var config = Configuration{
+	SyncInterval: time.Second,
+}
 
 func Config() Configuration {
 	if !loaded {
