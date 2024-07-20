@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -11,7 +9,7 @@ import (
 )
 
 type Configuration struct {
-	DeleteDataAfterDay            *time.Duration `mapstructure:"DELETE_DATA_AFTER_DAY"`
+	DeleteDataAfter               *time.Duration `mapstructure:"DELETE_DATA_AFTER"`
 	ExpirationTime                int            `mapstructure:"EXPIRATION_TIME"`
 	TemporaryAccessExpirationTime int            `mapstructure:"TEMPORARY_ACCESS_EXPIRATION_TIME"`
 	SkipRestrictions              bool           `mapstructure:"SKIP_RESTRICTIONS"`
@@ -32,7 +30,6 @@ var config *Configuration
 
 func Config() *Configuration {
 	if !loaded {
-		fmt.Printf("Getenv: %q\n", os.Getenv("SYNC_INTERVAL"))
 		v := viper.NewWithOptions(viper.ExperimentalBindStruct())
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		v.AutomaticEnv()

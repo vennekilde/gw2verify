@@ -187,9 +187,9 @@ func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, 
 	}
 
 	// Should we delete old data?
-	if config.Config().DeleteDataAfterDay != nil {
+	if config.Config().DeleteDataAfter != nil {
 		// Is the data old?
-		expTime := *config.Config().DeleteDataAfterDay * (time.Hour * 24)
+		expTime := *config.Config().DeleteDataAfter
 		if time.Since(token.LastSuccess) > expTime {
 			var isBanned bool
 			var storedAcc orm.Account
