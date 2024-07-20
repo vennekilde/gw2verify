@@ -28,6 +28,7 @@ const (
 
 const (
 	AchievementIDRealmAvenger     = 283
+	AchivementIDRealmAvengerIX    = 7912
 	AchievementIDSupplySpend      = 306
 	AchievementIDDollyEscort      = 285
 	AchievementIDDollyKill        = 288
@@ -45,6 +46,7 @@ const (
 
 var achievements = []int{
 	AchievementIDRealmAvenger,
+	AchivementIDRealmAvengerIX,
 	AchievementIDSupplySpend,
 	AchievementIDDollyEscort,
 	AchievementIDDollyKill,
@@ -309,13 +311,32 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 		if err != nil && err.Error() != "all ids provided are invalid" {
 			zap.L().Error("unable to fetch account achivements", zap.Error(err))
 		} else {
+			var kills int
 			for _, achivement := range achivements {
-				history.UpdateAchievement(tx, acc.ID, achivement.ID, achivement.Current)
+				// Update Realm Avenger with highest kill count
+				// It seems that they are not updated in order, so we need to keep track of the highest kill count
+				if achivement.ID == AchievementIDRealmAvenger || achivement.ID == AchivementIDRealmAvengerIX {
+					if achivement.Current > kills {
+						kills = achivement.Current
+					}
+					continue
+				}
+				err = history.UpdateAchievement(tx, acc.ID, achivement.ID, achivement.Current)
+				if err != nil {
+					zap.L().Error("unable to update account achivement", zap.Error(err), zap.Any("achivement", achivement))
+				}
+			}
+			err = history.UpdateAchievement(tx, acc.ID, AchievementIDRealmAvenger, kills)
+			if err != nil {
+				zap.L().Error("unable to update account achivement realm avenger", zap.Error(err))
 			}
 		}
 
 		// Update WvW rank with fake achievement id
-		history.UpdateAchievement(tx, acc.ID, CustomAchievementIDWvWRank, acc.WvWRank)
+		err = history.UpdateAchievement(tx, acc.ID, CustomAchievementIDWvWRank, acc.WvWRank)
+		if err != nil {
+			zap.L().Error("unable to update account achivement wvw rank", zap.Error(err))
+		}
 	}
 
 	// update last success
