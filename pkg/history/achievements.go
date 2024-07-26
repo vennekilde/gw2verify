@@ -2,6 +2,7 @@ package history
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ type Achievement struct {
 
 // Equivalent checks if two activities contain the same stats and ignores the timestamp
 func (a Achievement) Equivalent(b Achievement) bool {
-	return a.AccountID == b.AccountID && a.Achievement == b.Achievement && a.Value == b.Value
+	return strings.EqualFold(a.AccountID, b.AccountID) && a.Achievement == b.Achievement && a.Value == b.Value
 }
 
 // UpdateAchievement updates the achievement of a user
@@ -53,7 +54,7 @@ func UpdateAchievement(tx bun.IDB, accountID string, achievementID int, value in
 		achievement.ID = achievements[0].ID
 		_, err := tx.NewUpdate().
 			Model(&achievement).
-			Where("id = ?", achievements[0].ID).
+			Where("id = ?", achievement.ID).
 			Exec(ctx)
 		if err != nil {
 			return errors.WithStack(err)
