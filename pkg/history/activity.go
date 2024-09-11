@@ -2,6 +2,7 @@ package history
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -18,7 +19,7 @@ type Activity struct {
 
 // Equivalent checks if two activities contain the same stats and ignores the timestamp
 func (a Activity) Equivalent(b Activity) bool {
-	return a.AccountID == b.AccountID && a.Rank == b.Rank && a.Kills == b.Kills
+	return strings.EqualFold(a.AccountID, b.AccountID) && a.Rank == b.Rank && a.Kills == b.Kills
 }
 
 // UpdateActivity updates the activity of a user
