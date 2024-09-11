@@ -16,6 +16,7 @@ type Configuration struct {
 	Debug                         bool           `mapstructure:"DEBUG"`
 	CollectStatisticsAfter        time.Time      `mapstructure:"COLLECT_STATISTICS_AFTER"`
 	SyncInterval                  time.Duration  `mapstructure:"SYNC_INTERVAL"`
+	MaxConcurrentSyncs            int32          `mapstructure:"MAX_CONCURRENT_SYNCS"`
 
 	// DB
 	PostgresHost     string `mapstructure:"POSTGRES_HOST"`
@@ -34,7 +35,10 @@ func Config() *Configuration {
 		v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		v.AutomaticEnv()
 
-		conf := Configuration{}
+		conf := Configuration{
+			MaxConcurrentSyncs: 5,
+			SyncInterval:       time.Second,
+		}
 
 		err := v.Unmarshal(&conf)
 		if err != nil {

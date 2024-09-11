@@ -65,6 +65,16 @@ func (token *TokenInfo) UpdateLastSuccessfulUpdate() (err error) {
 	return errors.WithStack(err)
 }
 
+func FindNextAccountAPIKeysToUpdate(ignoreOlderThan int) (tokens []TokenInfo, err error) {
+	ctx := context.Background()
+	err = DB().NewSelect().
+		Model(&tokens).
+		Order("db_updated").
+		Where("account_id = (SELECT account_id FROM token_infos WHERE (last_success >= db_updated - interval '" + strconv.Itoa(ignoreOlderThan) + " seconds' OR last_success IS NULL) ORDER BY db_updated LIMIT 1)").
+		Scan(ctx)
+	return tokens, errors.WithStack(err)
+}
+
 func FindLastUpdatedAPIKey(ignoreOlderThan int) (token TokenInfo, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().

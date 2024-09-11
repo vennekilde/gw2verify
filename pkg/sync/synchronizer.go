@@ -95,6 +95,8 @@ func (s *Service) Start() {
 	var successCount atomic.Int32
 	var successTimestamp = time.Now()
 
+	var activeJobs atomic.Int32
+	var syncJobsSkipped atomic.Int32
 	conf := config.Config()
 	for {
 		func() {
@@ -110,17 +112,23 @@ func (s *Service) Start() {
 				time.Sleep(10 * time.Second)
 			}
 
-			go func() {
-				err := s.SynchronizeNextAPIKey(orm.DB())
-				if err != nil {
-					zap.L().Error("unable to sync api key", zap.Error(err))
-					consecutiveFailureCount.Add(1)
-					failureCount.Add(1)
-					return
-				}
-				consecutiveFailureCount.Store(0)
-				successCount.Add(1)
-			}()
+			if activeJobs.Load() < conf.MaxConcurrentSyncs {
+				activeJobs.Add(1)
+				go func() {
+					err := s.SynchronizeNextAPIKey(orm.DB())
+					if err != nil {
+						zap.L().Error("unable to sync api key", zap.Error(err))
+						consecutiveFailureCount.Add(1)
+						failureCount.Add(1)
+						return
+					}
+					consecutiveFailureCount.Store(0)
+					successCount.Add(1)
+					activeJobs.Add(-1)
+				}()
+			} else {
+				syncJobsSkipped.Add(1)
+			}
 
 			// Wait for next sync interval
 			time.Sleep(conf.SyncInterval)
@@ -130,10 +138,13 @@ func (s *Service) Start() {
 				zap.L().Info("statistics past 10 minutes",
 					zap.Int32("successes", successCount.Load()),
 					zap.Int32("failures", consecutiveFailureCount.Load()),
+					zap.Int32("skips", syncJobsSkipped.Load()),
+					zap.Int32("active jobs", activeJobs.Load()),
 					zap.Int32("current consecutive failures", consecutiveFailureCount.Load()))
 				successTimestamp = time.Now()
 				successCount.Store(0)
 				failureCount.Store(0)
+				syncJobsSkipped.Store(0)
 			}
 		}()
 	}
