@@ -20,6 +20,9 @@ func QueryGetUsers(idb bun.IDB, model any) *bun.SelectQuery {
 		Relation("Accounts", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where(fmt.Sprintf("NOW() < db_updated + interval '%d seconds'", config.Config().ExpirationTime))
 		}).
+		Relation("Accounts.ApiKeys", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(fmt.Sprintf("NOW() < db_updated + interval '%d seconds'", config.Config().ExpirationTime))
+		}).
 		Relation("PlatformLinks").
 		Relation("EphemeralAssociations", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("NOW() < until")
