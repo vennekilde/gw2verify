@@ -2,6 +2,8 @@ module github.com/vennekilde/gw2verify/v2
 
 go 1.21
 
+replace github.com/MrGunflame/gw2api => ../gw2api
+
 require (
 	github.com/MrGunflame/gw2api v1.0.4
 	github.com/alexlast/bunzap v0.1.0

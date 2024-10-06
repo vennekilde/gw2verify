@@ -2,8 +2,6 @@ github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 h1:L/gRVlceqvL25
 github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
-github.com/MrGunflame/gw2api v1.0.4 h1:9MTn+SwR4Ev8u+keeXp0pH+kpJfkyiOEkvZXSEUaNbE=
-github.com/MrGunflame/gw2api v1.0.4/go.mod h1:T6YZ4C50TFkLYylwrzXkSFPedEhRGjFStBypK6bDoBs=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/alexlast/bunzap v0.1.0 h1:GfFAuLfGGmyPAKVpEtNMzTdi4qCNi+1MzhfII7wpao8=
 github.com/alexlast/bunzap v0.1.0/go.mod h1:j73jUB7k/V2Sd+P0lKGmwG5pFA0z7UiuqgGxzgwCvW8=
