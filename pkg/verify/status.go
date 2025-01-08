@@ -51,7 +51,7 @@ func (v *Verification) Status(worldPerspective int, user *api.User) api.Status {
 
 // AccountStatus checks the verification api.ACCESS status for an account given a world perspective
 func (v *Verification) AccountStatus(worldPerspective int, acc *api.Account) api.Status {
-	if acc == nil || acc.Id == "" {
+	if acc == nil || acc.ID == "" {
 		return api.ACCESS_DENIED_ACCOUNT_NOT_LINKED
 	}
 

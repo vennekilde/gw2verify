@@ -110,9 +110,11 @@ func (acc *Account) FromGW2API(gw2Acc gw2api.Account) {
 	if len(gw2Acc.Guilds) > 0 {
 		acc.Guilds = &gw2Acc.Guilds
 	}
-	acc.Id = gw2Acc.ID
+	acc.ID = gw2Acc.ID
 	acc.MonthlyAp = &gw2Acc.MonthlyAP
 	acc.Name = gw2Acc.Name
 	acc.World = gw2Acc.World
-	acc.WvwRank = &gw2Acc.WvWRank
+	acc.WvWRank = gw2Acc.WvWRank
+	acc.WvWTeamID = gw2Acc.WvW.TeamID
+	acc.LastModified = &gw2Acc.LastModified
 }

@@ -175,6 +175,8 @@ github.com/uptrace/bun/dialect/pgdialect v1.1.17 h1:NsvFVHAx1Az6ytlAD/B6ty3cVE6j
 github.com/uptrace/bun/dialect/pgdialect v1.1.17/go.mod h1:fLBDclNc7nKsZLzNjFL6BqSdgJzbj2HdnyOnLoDvAME=
 github.com/uptrace/bun/driver/pgdriver v1.1.17 h1:hLj6WlvSZk5x45frTQnJrYtyhvgI6CA4r7gYdJ0gpn8=
 github.com/uptrace/bun/driver/pgdriver v1.1.17/go.mod h1:c9fa6FiiQjOe9mCaJC9NmFUE6vCGKTEsqrtLjPNz+kk=
+github.com/vennekilde/gw2api v0.0.0-20250107185353-0519814836b3 h1:MMOoRwYjn4yc+mg6XsG0m8NS+tWOZoKmWaFsCAdlxe4=
+github.com/vennekilde/gw2api v0.0.0-20250107185353-0519814836b3/go.mod h1:T6YZ4C50TFkLYylwrzXkSFPedEhRGjFStBypK6bDoBs=
 github.com/vmihailenco/msgpack/v5 v5.4.1 h1:cQriyiUvjTwOHg8QZaPihLWeRAAVoCpE00IUPn0Bjt8=
 github.com/vmihailenco/msgpack/v5 v5.4.1/go.mod h1:GaZTsDaehaPpQVyxrf5mtQlH+pc21PIudVV/E3rRQok=
 github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAhO7/IwNM9g=

@@ -102,8 +102,8 @@ func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspectiv
 	}
 
 	// Persist account info
-	ormAcc := orm.Account{Account: acc, UserID: user.Id}
-	err = ormAcc.Persist(tx)
+	newAcc.UserID = user.Id
+	err = newAcc.Persist(tx)
 	if err != nil {
 		return errors.WithStack(err), nil
 	}
