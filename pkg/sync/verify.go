@@ -89,6 +89,12 @@ func (s *Service) SetAPIKeyByUserService(gw2API *gw2api.Session, worldPerspectiv
 		return err, nil
 	}
 
+	// Synchronize WvW data
+	err = synchronizeAccountWvW(gw2API, &newAcc, gw2Token.Permissions)
+	if err != nil {
+		return err, nil
+	}
+
 	// Notify listeners if needed of verification changes (if any)
 	newAcc.FromGW2API(acc)
 	if s.em.ShouldEmitAccount(&oldAcc, &newAcc) {

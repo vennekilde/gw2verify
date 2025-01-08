@@ -290,7 +290,7 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 	}
 
 	// Synchronize WvW data
-	err = s.synchronizeAccountWvW(gw2API, newAcc, token)
+	err = synchronizeAccountWvW(gw2API, newAcc, token.Permissions)
 	if err != nil {
 		return newAcc, errors.WithStack(err)
 	}
@@ -337,8 +337,8 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 	return newAcc, nil
 }
 
-func (s *Service) synchronizeAccountWvW(gw2API *gw2api.Session, acc *api.Account, token *orm.TokenInfo) error {
-	if !slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "wvw") }) {
+func synchronizeAccountWvW(gw2API *gw2api.Session, acc *api.Account, permissions []string) error {
+	if !slices.ContainsFunc(permissions, func(val string) bool { return strings.Contains(val, "wvw") }) {
 		return nil
 	}
 
