@@ -144,7 +144,7 @@ outerLoop:
 		newAccount := &newAccounts[i]
 		for k := range oldAccounts {
 			oldAccount := &oldAccounts[k]
-			if oldAccount.Id == newAccount.Id {
+			if oldAccount.ID == newAccount.ID {
 				if em.ShouldEmitAccount(oldAccount, newAccount) {
 					return true
 				}

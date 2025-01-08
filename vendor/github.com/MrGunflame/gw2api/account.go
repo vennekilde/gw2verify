@@ -36,11 +36,17 @@ type Account struct {
 	DailyAP      int           `json:"daily_ap"`
 	MonthlyAP    int           `json:"monthly_ap"`
 	WvWRank      int           `json:"wvw_rank"`
+	LastModified time.Time     `json:"last_modified"`
+	WvW          WvW           `json:"wvw"`
 }
 
 // Account returns general account information
 func (s *Session) Account() (account Account, err error) {
-	err = s.getWithAuth("/v2/account", &account)
+	err = s.getWithAuth("/v2/account?v=2024-07-20T01:00:00.000Z", &account)
+	// Backwards compatibility for Account.WvWRank, as that information is now in Account.WvW.Rank
+	if account.WvW.Rank > 0 {
+		account.WvWRank = account.WvW.Rank
+	}
 	return
 }
 
@@ -134,6 +140,12 @@ func (s *Session) AccountSharedInventory() (items []*ItemStack, err error) {
 type AccountLuck struct {
 	ID    string `json:"id"`
 	Value int    `json:"value"`
+}
+
+// AccountJadebots returns the list of Jade Bots unlocked by the account.
+func (s *Session) AccountJadeBots() (bots []int, err error) {
+	err = s.getWithAuth("/v2/account/jadebots", &bots)
+	return
 }
 
 // AccountLuck returns the accounts luck
@@ -284,4 +296,22 @@ type AccountLegendaryArmoryItem struct {
 func (s *Session) AccountLegendaryArmory() (res []*AccountLegendaryArmoryItem, err error) {
 	err = s.getWithAuth("/v2/account/legendaryarmory", &res)
 	return
+}
+
+// AccountWvW is the accounts WvW information
+type AccountWvW struct {
+	Team  int    `json:"team"`
+	Guild string `json:"guild"`
+}
+
+// AccountLegendaryArmory returns the items in the account's legendary armory
+func (s *Session) AccountWvW() (wvw AccountWvW, err error) {
+	err = s.getWithAuth("/v2/account/wvw", &wvw)
+	return
+}
+
+// WvW is the accounts WvW information
+type WvW struct {
+	TeamID int `json:"team_id"`
+	Rank   int `json:"rank"`
 }

@@ -1,0 +1,1 @@
+DROP INDEX "achievements_achievement", "achievements_account_id_achievement";

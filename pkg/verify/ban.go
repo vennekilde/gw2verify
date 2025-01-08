@@ -30,7 +30,7 @@ func GetActiveBan(bans []api.Ban) *api.Ban {
 }
 
 // GetBan returns the longest active ban on an account, if they have any
-func GetBan(acc *orm.Account) *orm.Ban {
+func GetBan(acc *api.Account) *orm.Ban {
 	ctx := context.Background()
 	//Find Longest active ban
 	ban := orm.Ban{}

@@ -1,4 +1,4 @@
-# github.com/MrGunflame/gw2api v1.0.4
+# github.com/MrGunflame/gw2api v1.0.4 => github.com/vennekilde/gw2api v0.0.0-20250107185353-0519814836b3
 ## explicit; go 1.15
 github.com/MrGunflame/gw2api
 # github.com/alexlast/bunzap v0.1.0
@@ -287,7 +287,7 @@ golang.org/x/arch/x86/x86asm
 ## explicit; go 1.20
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/sha3
-# golang.org/x/net v0.25.0
+# golang.org/x/net v0.33.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -338,3 +338,4 @@ gopkg.in/yaml.v3
 # mellium.im/sasl v0.3.1
 ## explicit; go 1.18
 mellium.im/sasl
+# github.com/MrGunflame/gw2api => github.com/vennekilde/gw2api v0.0.0-20250107185353-0519814836b3

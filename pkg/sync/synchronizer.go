@@ -179,7 +179,7 @@ func (s *Service) SynchronizeNextAPIKey(tx bun.IDB) error {
 	return nil
 }
 
-func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, err error) error {
+func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *api.Account, err error) error {
 	ctx := context.Background()
 
 	if acc != nil {
@@ -203,7 +203,7 @@ func (s *Service) HandleFailedTokenInfo(token *orm.TokenInfo, acc *orm.Account, 
 		expTime := *config.Config().DeleteDataAfter
 		if time.Since(token.LastSuccess) > expTime {
 			var isBanned bool
-			var storedAcc orm.Account
+			var storedAcc api.Account
 			// Do we have acc data for the user?
 			if acc != nil {
 				// Check if user is banned before deleting data
@@ -256,65 +256,108 @@ func (s *Service) SynchronizeUser(tx bun.IDB, gw2API *gw2api.Session, userID int
 	return nil
 }
 
-func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo) (acc *orm.Account, err error) {
+func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo) (newAcc *api.Account, err error) {
 	ctx := context.Background()
 	// Fetch newest account data from gw2 api
-	gw2Acc, err := gw2API.WithAccessToken(token.APIKey).Account()
+	gw2API = gw2API.WithAccessToken(token.APIKey)
+	gw2Acc, err := gw2API.Account()
 	if err != nil {
-		return acc, errors.WithStack(err)
+		return newAcc, errors.WithStack(err)
 	}
-	acc = &orm.Account{
-		Account: gw2Acc,
-	}
+	newAcc = &api.Account{}
+	newAcc.FromGW2API(gw2Acc)
 
 	// Fetch persisted account data from database
-	storedAcc := orm.Account{}
-	err = tx.NewSelect().Model(&storedAcc).Where(`"id" = ?`, acc.ID).Scan(ctx)
+	oldAcc := api.Account{}
+	err = tx.NewSelect().Model(&oldAcc).Where(`"id" = ?`, gw2Acc.ID).Scan(ctx)
 	if err != nil && err != sql.ErrNoRows {
-		return acc, errors.WithStack(err)
+		return newAcc, errors.WithStack(err)
 	}
-	acc.UserID = storedAcc.UserID
+	newAcc.UserID = oldAcc.UserID
 
 	// Store any account changes in the history
-	history.CollectAccount(storedAcc, gw2Acc)
+	history.CollectAccount(oldAcc, gw2Acc)
 
 	// Notify listeners if needed of verification changes (if any)
-	var newAcc, oldAcc api.Account
-	newAcc.FromGW2API(gw2Acc)
-	oldAcc.FromGW2API(storedAcc.Account)
-	if s.em.ShouldEmitAccount(&oldAcc, &newAcc) {
+	if s.em.ShouldEmitAccount(&oldAcc, newAcc) {
 		var user api.User
-		err = orm.QueryGetUser(tx, &user, acc.UserID).
+		err = orm.QueryGetUser(tx, &user, newAcc.UserID).
 			Scan(ctx)
 		if err != nil {
-			return acc, errors.WithStack(err)
+			return newAcc, errors.WithStack(err)
 		}
 		s.em.Emit(&user)
 	}
 
-	// persist any changes made to the account data
-	err = acc.Persist(tx)
+	// Synchronize WvW data
+	err = s.synchronizeAccountWvW(gw2API, newAcc, token)
 	if err != nil {
-		return acc, err
+		return newAcc, errors.WithStack(err)
+	}
+
+	// persist any changes made to the account data
+	err = newAcc.Persist(tx)
+	if err != nil {
+		return newAcc, err
 	}
 
 	//Check if token metadata is missing
 	if token.AccountID == "" || len(token.Permissions) <= 0 {
-		token.AccountID = acc.ID
+		token.AccountID = newAcc.ID
 		token.LastSuccess = time.Now()
 
 		//Retrieve token from api and persist it
 		token.TokenInfo, err = gw2API.Tokeninfo()
 		if err != nil {
-			return acc, errors.WithStack(err)
+			return newAcc, errors.WithStack(err)
 		}
 
 		err = token.Persist(tx)
 		if err != nil {
-			return acc, err
+			return newAcc, err
 		}
 	}
 
+	// Synchronize account achievements
+	err = s.synchronizeAccountAchievements(tx, gw2API, token, newAcc)
+	if err != nil {
+		return newAcc, errors.WithStack(err)
+	}
+
+	// update last success
+	err = token.UpdateLastSuccessfulUpdate()
+	if err != nil {
+		return newAcc, err
+	}
+
+	if config.Config().Debug {
+		zap.L().Info("updated account", zap.String("account name", newAcc.Name))
+	}
+
+	return newAcc, nil
+}
+
+func (s *Service) synchronizeAccountWvW(gw2API *gw2api.Session, acc *api.Account, token *orm.TokenInfo) error {
+	if !slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "wvw") }) {
+		return nil
+	}
+
+	accWvW, err := gw2API.AccountWvW()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Update WvW Team and Guild
+	if accWvW.Team != 0 {
+		acc.WvWTeamID = accWvW.Team
+	}
+	if accWvW.Guild != "" {
+		acc.WvWGuildID = &accWvW.Guild
+	}
+	return nil
+}
+
+func (s *Service) synchronizeAccountAchievements(tx bun.IDB, gw2API *gw2api.Session, token *orm.TokenInfo, acc *api.Account) error {
 	// Synchronize achivements
 	if slices.ContainsFunc(token.Permissions, func(val string) bool { return strings.Contains(val, "progression") }) {
 		achivements, err := gw2API.AccountAchievements(achievements...)
@@ -354,16 +397,5 @@ func (s *Service) SynchronizeAPIKey(tx bun.IDB, gw2API *gw2api.Session, token *o
 			zap.L().Error("unable to update account achivement playtime", zap.Error(err))
 		}
 	}
-
-	// update last success
-	err = token.UpdateLastSuccessfulUpdate()
-	if err != nil {
-		return acc, err
-	}
-
-	if config.Config().Debug {
-		zap.L().Info("updated account", zap.String("account name", acc.Name))
-	}
-
-	return acc, nil
+	return nil
 }

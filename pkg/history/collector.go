@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MrGunflame/gw2api"
+	"github.com/vennekilde/gw2verify/v2/internal/api"
 	"github.com/vennekilde/gw2verify/v2/internal/orm"
 	"go.uber.org/zap"
 )
@@ -42,7 +43,7 @@ func Collect() error {
 	return nil
 }
 
-func CollectAccount(storedAcc orm.Account, acc gw2api.Account) error {
+func CollectAccount(storedAcc api.Account, acc gw2api.Account) error {
 	ctx := context.Background()
 	db := orm.DB()
 	if storedAcc.World != acc.World {

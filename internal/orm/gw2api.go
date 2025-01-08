@@ -97,22 +97,7 @@ func FindUserAPIKeys(userID int64, ignoreOlderThan int) (tokens []TokenInfo, err
 	return tokens, errors.WithStack(err)
 }
 
-type Account struct {
-	Model          `bun:",extend"`
-	gw2api.Account `bun:",extend"`
-	UserID         int64
-}
-
-func (acc *Account) Persist(tx bun.IDB) (err error) {
-	ctx := context.Background()
-	_, err = tx.NewInsert().
-		Model(acc).
-		On(`CONFLICT ("id") DO UPDATE`).
-		Exec(ctx)
-	return errors.WithStack(err)
-}
-
-func GetUserAccounts(userID int64) (accounts []Account, err error) {
+func GetUserAccounts(userID int64) (accounts []api.Account, err error) {
 	ctx := context.Background()
 	err = DB().NewSelect().
 		Model(&accounts).
