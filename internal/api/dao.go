@@ -9,9 +9,15 @@ import (
 
 func (acc *Account) Persist(tx bun.IDB) (err error) {
 	ctx := context.Background()
-	_, err = tx.NewInsert().
+	query := tx.NewInsert().
 		Model(acc).
-		On(`CONFLICT ("id") DO UPDATE`).
-		Exec(ctx)
+		On(`CONFLICT ("id") DO UPDATE`)
+
+	if acc.WvWGuildID == nil {
+		// Exclude column from update
+		query.ExcludeColumn("wvw_guild_id")
+	}
+
+	_, err = query.Exec(ctx)
 	return errors.WithStack(err)
 }

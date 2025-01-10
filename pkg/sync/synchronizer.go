@@ -351,9 +351,11 @@ func synchronizeAccountWvW(gw2API *gw2api.Session, acc *api.Account, permissions
 	if accWvW.Team != 0 {
 		acc.WvWTeamID = accWvW.Team
 	}
-	if accWvW.Guild != "" {
-		acc.WvWGuildID = &accWvW.Guild
+	if accWvW.Guild == "" {
+		// Differentiate between unassigned and no data
+		accWvW.Guild = "unassigned"
 	}
+	acc.WvWGuildID = &accWvW.Guild
 	return nil
 }
 
