@@ -1,6 +1,7 @@
 module github.com/vennekilde/gw2verify/v2
 
 go 1.21
+toolchain go1.23.7
 
 // replace github.com/MrGunflame/gw2api => ../gw2api
 replace github.com/MrGunflame/gw2api => github.com/vennekilde/gw2api v0.0.0-20250107185353-0519814836b3
@@ -69,10 +70,10 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.7.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.1 // indirect
