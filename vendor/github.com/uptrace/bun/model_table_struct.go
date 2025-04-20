@@ -116,9 +116,6 @@ func (m *structTableModel) BeforeScanRow(ctx context.Context) error {
 	if m.table.HasBeforeScanRowHook() {
 		return m.strct.Addr().Interface().(schema.BeforeScanRowHook).BeforeScanRow(ctx)
 	}
-	if m.table.HasBeforeScanHook() {
-		return m.strct.Addr().Interface().(schema.BeforeScanHook).BeforeScan(ctx)
-	}
 	return nil
 }
 
@@ -131,21 +128,6 @@ func (m *structTableModel) AfterScanRow(ctx context.Context) error {
 
 	if m.table.HasAfterScanRowHook() {
 		firstErr := m.strct.Addr().Interface().(schema.AfterScanRowHook).AfterScanRow(ctx)
-
-		for _, j := range m.joins {
-			switch j.Relation.Type {
-			case schema.HasOneRelation, schema.BelongsToRelation:
-				if err := j.JoinModel.AfterScanRow(ctx); err != nil && firstErr == nil {
-					firstErr = err
-				}
-			}
-		}
-
-		return firstErr
-	}
-
-	if m.table.HasAfterScanHook() {
-		firstErr := m.strct.Addr().Interface().(schema.AfterScanHook).AfterScan(ctx)
 
 		for _, j := range m.joins {
 			switch j.Relation.Type {
@@ -260,7 +242,7 @@ func (m *structTableModel) ScanRows(ctx context.Context, rows *sql.Rows) (int, e
 	n++
 
 	// And discard the rest. This is especially important for SQLite3, which can return
-	// a row like it was inserted sucessfully and then return an actual error for the next row.
+	// a row like it was inserted successfully and then return an actual error for the next row.
 	// See issues/100.
 	for rows.Next() {
 		n++
@@ -325,7 +307,7 @@ func (m *structTableModel) scanColumn(column string, src interface{}) (bool, err
 		}
 	}
 
-	if field, ok := m.table.FieldMap[column]; ok {
+	if field := m.table.LookupField(column); field != nil {
 		if src == nil && m.isNil() {
 			return true, nil
 		}

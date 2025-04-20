@@ -18,6 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/uptrace/bun/internal"
 	"mellium.im/sasl"
 )
 
@@ -199,12 +200,12 @@ func writeStartup(ctx context.Context, cn *Conn) error {
 	wb.StartMessage(0)
 	wb.WriteInt32(196608)
 	wb.WriteString("user")
-	wb.WriteString(cn.cfg.User)
+	wb.WriteString(cn.conf.User)
 	wb.WriteString("database")
-	wb.WriteString(cn.cfg.Database)
-	if cn.cfg.AppName != "" {
+	wb.WriteString(cn.conf.Database)
+	if cn.conf.AppName != "" {
 		wb.WriteString("application_name")
-		wb.WriteString(cn.cfg.AppName)
+		wb.WriteString(cn.conf.AppName)
 	}
 	wb.WriteString("")
 	wb.FinishMessage()
@@ -238,7 +239,7 @@ func auth(ctx context.Context, cn *Conn, rd *reader) error {
 }
 
 func authCleartext(ctx context.Context, cn *Conn, rd *reader) error {
-	if err := writePassword(ctx, cn, cn.cfg.Password); err != nil {
+	if err := writePassword(ctx, cn, cn.conf.Password); err != nil {
 		return err
 	}
 	return readAuthOK(cn, rd)
@@ -279,7 +280,7 @@ func authMD5(ctx context.Context, cn *Conn, rd *reader) error {
 		return err
 	}
 
-	secret := "md5" + md5s(md5s(cn.cfg.Password+cn.cfg.User)+string(b))
+	secret := "md5" + md5s(md5s(cn.conf.Password+cn.conf.User)+string(b))
 	if err := writePassword(ctx, cn, secret); err != nil {
 		return err
 	}
@@ -328,7 +329,7 @@ loop:
 	}
 
 	creds := sasl.Credentials(func() (Username, Password, Identity []byte) {
-		return []byte(cn.cfg.User), []byte(cn.cfg.Password), nil
+		return []byte(cn.conf.User), []byte(cn.conf.Password), nil
 	})
 	client := sasl.NewClient(saslMech, creds)
 
@@ -617,7 +618,7 @@ func (d *rowDescription) addName(name []byte) {
 
 	i := len(d.buf)
 	d.buf = append(d.buf, name...)
-	d.names = append(d.names, bytesToString(d.buf[i:]))
+	d.names = append(d.names, internal.String(d.buf[i:]))
 }
 
 func (d *rowDescription) addType(dataType int32) {

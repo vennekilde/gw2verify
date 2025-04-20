@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -28,7 +30,7 @@ var ErrInvalidEmptyValue = errors.New("empty value is not allowed")
 //
 // Note: One can tune the behavior of uniqueItems: true verification
 // by registering a custom function with openapi3.RegisterArrayUniqueItemsChecker
-func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err error) {
+func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 	var me openapi3.MultiError
 
 	options := input.Options
@@ -48,10 +50,10 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 		security = &route.Spec.Security
 	}
 	if security != nil {
-		if err = ValidateSecurityRequirements(ctx, input, *security); err != nil && !options.MultiError {
-			return
-		}
-		if err != nil {
+		if err := ValidateSecurityRequirements(ctx, input, *security); err != nil {
+			if !options.MultiError {
+				return err
+			}
 			me = append(me, err)
 		}
 	}
@@ -65,10 +67,10 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 			}
 		}
 
-		if err = ValidateParameter(ctx, input, parameter); err != nil && !options.MultiError {
-			return
-		}
-		if err != nil {
+		if err := ValidateParameter(ctx, input, parameter); err != nil {
+			if !options.MultiError {
+				return err
+			}
 			me = append(me, err)
 		}
 	}
@@ -78,10 +80,10 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 		if options.ExcludeRequestQueryParams && parameter.Value.In == openapi3.ParameterInQuery {
 			continue
 		}
-		if err = ValidateParameter(ctx, input, parameter.Value); err != nil && !options.MultiError {
-			return
-		}
-		if err != nil {
+		if err := ValidateParameter(ctx, input, parameter.Value); err != nil {
+			if !options.MultiError {
+				return err
+			}
 			me = append(me, err)
 		}
 	}
@@ -89,10 +91,10 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 	// RequestBody
 	requestBody := operation.RequestBody
 	if requestBody != nil && !options.ExcludeRequestBody {
-		if err = ValidateRequestBody(ctx, input, requestBody.Value); err != nil && !options.MultiError {
-			return
-		}
-		if err != nil {
+		if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+			if !options.MultiError {
+				return err
+			}
 			me = append(me, err)
 		}
 	}
@@ -100,7 +102,36 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) (err er
 	if len(me) > 0 {
 		return me
 	}
-	return
+	return nil
+}
+
+// appendToQueryValues adds to query parameters each value in the provided slice
+func appendToQueryValues[T any](q url.Values, parameterName string, v []T) {
+	for _, i := range v {
+		q.Add(parameterName, fmt.Sprintf("%v", i))
+	}
+}
+
+func joinValues(values []any, sep string) string {
+	strValues := make([]string, 0, len(values))
+	for _, v := range values {
+		strValues = append(strValues, fmt.Sprintf("%v", v))
+	}
+	return strings.Join(strValues, sep)
+}
+
+// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected
+func populateDefaultQueryParameters(q url.Values, parameterName string, value any, explode bool) {
+	switch t := value.(type) {
+	case []any:
+		if explode {
+			appendToQueryValues(q, parameterName, t)
+		} else {
+			q.Add(parameterName, joinValues(t, ","))
+		}
+	default:
+		q.Add(parameterName, fmt.Sprintf("%v", value))
+	}
 }
 
 // ValidateParameter validates a parameter's value by JSON schema.
@@ -121,7 +152,7 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		options = &Options{}
 	}
 
-	var value interface{}
+	var value any
 	var err error
 	var found bool
 	var schema *openapi3.Schema
@@ -156,7 +187,8 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				// Next check `parameter.Required && !found` will catch this.
 			case openapi3.ParameterInQuery:
 				q := req.URL.Query()
-				q.Add(parameter.Name, fmt.Sprintf("%v", value))
+				explode := parameter.Explode != nil && *parameter.Explode
+				populateDefaultQueryParameters(q, parameter.Name, value, explode)
 				req.URL.RawQuery = q.Encode()
 			case openapi3.ParameterInHeader:
 				req.Header.Add(parameter.Name, fmt.Sprintf("%v", value))
@@ -296,6 +328,9 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.ExcludeReadOnlyValidations {
 		opts = append(opts, openapi3.DisableReadOnlyValidation())
+	}
+	if options.RegexCompiler != nil {
+		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
 	}
 
 	// Validate JSON with the schema
