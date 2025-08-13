@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -276,7 +276,7 @@ func (q *CreateTableQuery) appendUniqueConstraints(fmter schema.Formatter, b []b
 	for key := range unique {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	for _, key := range keys {
 		if key == "" {
@@ -308,17 +308,33 @@ func (q *CreateTableQuery) appendUniqueConstraint(
 
 // appendFKConstraintsRel appends a FOREIGN KEY clause for each of the model's existing relations.
 func (q *CreateTableQuery) appendFKConstraintsRel(fmter schema.Formatter, b []byte) (_ []byte, err error) {
-	for _, rel := range q.tableModel.Table().Relations {
-		if rel.References() {
+	relations := q.tableModel.Table().Relations
+
+	keys := make([]string, 0, len(relations))
+	for key := range relations {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+
+	for _, key := range keys {
+		if rel := relations[key]; rel.References() {
+			query := "(?) REFERENCES ? (?)"
+			args := []any{
+				Safe(appendColumns(nil, "", rel.BasePKs)),
+				rel.JoinTable.SQLName,
+				Safe(appendColumns(nil, "", rel.JoinPKs)),
+			}
+			if len(rel.OnUpdate) > 0 {
+				query += " ?"
+				args = append(args, Safe(rel.OnUpdate))
+			}
+			if len(rel.OnDelete) > 0 {
+				query += " ?"
+				args = append(args, Safe(rel.OnDelete))
+			}
 			b, err = q.appendFK(fmter, b, schema.QueryWithArgs{
-				Query: "(?) REFERENCES ? (?) ? ?",
-				Args: []interface{}{
-					Safe(appendColumns(nil, "", rel.BasePKs)),
-					rel.JoinTable.SQLName,
-					Safe(appendColumns(nil, "", rel.JoinPKs)),
-					Safe(rel.OnUpdate),
-					Safe(rel.OnDelete),
-				},
+				Query: query,
+				Args:  args,
 			})
 			if err != nil {
 				return nil, err
@@ -400,11 +416,12 @@ func (q *CreateTableQuery) afterCreateTableHook(ctx context.Context) error {
 	return nil
 }
 
+// String returns the generated SQL query string. The CreateTableQuery instance must not be
+// modified during query generation to ensure multiple calls to String() return identical results.
 func (q *CreateTableQuery) String() string {
 	buf, err := q.AppendQuery(q.db.Formatter(), nil)
 	if err != nil {
 		panic(err)
 	}
-
 	return string(buf)
 }
