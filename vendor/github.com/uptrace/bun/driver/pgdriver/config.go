@@ -45,6 +45,12 @@ type Config struct {
 	// ResetSessionFunc is called prior to executing a query on a connection
 	// that has been used before.
 	ResetSessionFunc func(context.Context, *Conn) error
+
+	// Enable tracing
+	EnableTracing bool
+
+	// size of reader buffer, default is 4096
+	BufferSize int
 }
 
 func newDefaultConfig() *Config {
@@ -62,6 +68,10 @@ func newDefaultConfig() *Config {
 
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 5 * time.Second,
+
+		EnableTracing: true,
+
+		BufferSize: 4096,
 	}
 
 	conf.Dialer = func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -82,6 +92,12 @@ func WithOptions(opts ...Option) Option {
 		for _, opt := range opts {
 			opt(conf)
 		}
+	}
+}
+
+func WithConfig(after *Config) Option {
+	return func(before *Config) {
+		*before = *after
 	}
 }
 
@@ -181,6 +197,12 @@ func WithWriteTimeout(writeTimeout time.Duration) Option {
 	}
 }
 
+func WithBufferSize(size int) Option {
+	return func(conf *Config) {
+		conf.BufferSize = size
+	}
+}
+
 // WithResetSessionFunc configures a function that is called prior to executing
 // a query on a connection that has been used before.
 // If the func returns driver.ErrBadConn, the connection is discarded.
@@ -199,6 +221,12 @@ func WithDSN(dsn string) Option {
 		for _, opt := range opts {
 			opt(conf)
 		}
+	}
+}
+
+func WithTracing(on bool) Option {
+	return func(conf *Config) {
+		conf.EnableTracing = on
 	}
 }
 

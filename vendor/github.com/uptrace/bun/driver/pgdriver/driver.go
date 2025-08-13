@@ -123,7 +123,7 @@ func newConn(ctx context.Context, conf *Config) (*Conn, error) {
 	cn := &Conn{
 		conf:    conf,
 		netConn: netConn,
-		rd:      newReader(netConn),
+		rd:      newReader(netConn, conf.BufferSize),
 	}
 
 	if conf.TLSConfig != nil {
@@ -380,6 +380,9 @@ func (cn *Conn) checkBadConn(err error) error {
 func (cn *Conn) Conn() net.Conn { return cn.netConn }
 
 func (cn *Conn) trace(ctx context.Context) {
+	if !cn.conf.EnableTracing {
+		return
+	}
 	if span := trace.SpanFromContext(ctx); span.IsRecording() {
 		span.SetAttributes(
 			semconv.DBUserKey.String(cn.conf.User),

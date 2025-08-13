@@ -1,15 +1,17 @@
 package schema
 
 import (
+	"cmp"
 	"database/sql"
 	"fmt"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/jinzhu/inflection"
 
+	"github.com/uptrace/bun/dialect/feature"
 	"github.com/uptrace/bun/internal"
 	"github.com/uptrace/bun/internal/tagparser"
 )
@@ -299,15 +301,14 @@ func (t *Table) processFields(typ reflect.Type) {
 }
 
 func sortFieldsByStruct(fields []*Field) {
-	sort.Slice(fields, func(i, j int) bool {
-		left, right := fields[i], fields[j]
+	slices.SortFunc(fields, func(left, right *Field) int {
 		for k := 0; k < len(left.Index) && k < len(right.Index); k++ {
-			if left.Index[k] != right.Index[k] {
-				return left.Index[k] < right.Index[k]
+			if res := cmp.Compare(left.Index[k], right.Index[k]); res != 0 {
+				return res
 			}
 		}
 		// NOTE: should not reach
-		return true
+		return 0
 	})
 }
 
@@ -538,6 +539,7 @@ func (t *Table) newField(sf reflect.StructField, tag tagparser.Tag) *Field {
 	}
 	if tag.HasOption("autoincrement") {
 		field.AutoIncrement = true
+		field.NotNull = true
 		field.NullZero = true
 	}
 	if tag.HasOption("identity") {
@@ -622,7 +624,10 @@ func (t *Table) belongsToRelation(field *Field) *Relation {
 		rel.Condition = field.Tag.Options["join_on"]
 	}
 
-	rel.OnUpdate = "ON UPDATE NO ACTION"
+	if t.dialect.Features().Has(feature.FKDefaultOnAction) {
+		rel.OnUpdate = "ON UPDATE NO ACTION"
+		rel.OnDelete = "ON DELETE NO ACTION"
+	}
 	if onUpdate, ok := field.Tag.Options["on_update"]; ok {
 		if len(onUpdate) > 1 {
 			panic(fmt.Errorf("bun: %s belongs-to %s: on_update option must be a single field", t.TypeName, field.GoName))
@@ -637,7 +642,6 @@ func (t *Table) belongsToRelation(field *Field) *Relation {
 		rel.OnUpdate = s
 	}
 
-	rel.OnDelete = "ON DELETE NO ACTION"
 	if onDelete, ok := field.Tag.Options["on_delete"]; ok {
 		if len(onDelete) > 1 {
 			panic(fmt.Errorf("bun: %s belongs-to %s: on_delete option must be a single field", t.TypeName, field.GoName))
